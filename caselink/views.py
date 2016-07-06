@@ -259,8 +259,8 @@ def index(request):
 def task_control(request):
 
     operations = []
-    task_to_trigger = request.GET.getlist('trigger', [])
 
+    task_to_trigger = request.GET.getlist('trigger', [])
     if 'linkage_error_check' in task_to_trigger:
         operations.append(update_linkage_error)
     if 'autocase_error_check' in task_to_trigger:
@@ -269,6 +269,7 @@ def task_control(request):
         operations.append(update_manualcase_error)
 
     async = True if request.GET.get('async', '') == 'true' else False
+    cancel = True if request.GET.get('cancel', '') == 'true' else False
 
     if len(operations) > 0:
         if not async:
@@ -295,6 +296,9 @@ def task_control(request):
                 'state': res.state,
                 'meta': res.info
             }
+            if cancel:
+                res.revoke(terminate=True)
+                task_status[task['name']]['canceled'] = True
     return JsonResponse(task_status)
 
 

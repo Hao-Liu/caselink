@@ -55,7 +55,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger">Cancel All Tasks</button>
+                        <button type="button" class="btn btn-danger btn-cancel">Cancel All Tasks</button>
                         <button type="button" class="btn btn-info btn-op btn-auto-error">Autocase Error Check</button>
                         <button type="button" class="btn btn-info btn-op btn-manual-error">Manualcase Error Check</button>
                         <button type="button" class="btn btn-info btn-op btn-linkage-error">Linkage Error Check</button>
@@ -122,10 +122,11 @@
                         'url':url,
                         'cache': false
                     }).done(function(data){
-                        alert(data.message);
+                        alert(JSON.stringify(data));
                     });
                 }
 
+                $(".btn-cancel").click(function(){ op_trigger('control?cancel=true'); });
                 $(".btn-auto-error").click(function(){ op_trigger('control?async=true&trigger=autocase_error_check'); });
                 $(".btn-manual-error").click(function(){ op_trigger('control?async=true&trigger=manualcase_error_check'); });
                 $(".btn-linkage-error").click(function(){ op_trigger('control?async=true&trigger=linkage_error_check'); });
