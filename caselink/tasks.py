@@ -29,37 +29,37 @@ from caselink.models import *
 @transaction.atomic
 def load_error():
     """Load baseline Error"""
-    _load_error_db(_baseline_loader('base_error.yaml'))
+    _load_error_db(_yaml_loader('base_error.yaml'))
 
 
 @transaction.atomic
 def load_project():
     """Load baseline Project"""
-    _load_project_db(_baseline_loader('base_project.yaml'))
+    _load_project_db(_yaml_loader('base_project.yaml'))
 
 
 @transaction.atomic
 def load_manualcase():
     """Load baseline Manual cases"""
-    _load_manualcase_db(_baseline_loader('base_workitem.yaml'))
+    _load_manualcase_db(_yaml_loader('base_workitem.yaml'))
 
 
 @transaction.atomic
 def load_linkage():
     """Load baseline linkage"""
-    _load_libvirt_ci_linkage_db(_baseline_loader('base_libvirt_ci_linkage.yaml'))
+    _load_libvirt_ci_linkage_db(_yaml_loader('base_libvirt_ci_linkage.yaml'))
 
 
 @transaction.atomic
 def load_autocase():
     """Load baseline Auto cases"""
-    _load_libvirt_ci_autocase_db(_baseline_loader('base_libvirt_ci_autocase.yaml'))
+    _load_libvirt_ci_autocase_db(_yaml_loader('base_libvirt_ci_autocase.yaml'))
 
 
 @transaction.atomic
 def load_failure():
     """Load baseline Auto cases"""
-    _load_bug(_baseline_loader('base_failures.yaml'))
+    _load_bug(_yaml_loader('base_failures.yaml'))
 
 
 @transaction.atomic
@@ -132,7 +132,7 @@ def update_autocase_error(case=None):
                                       meta={'current': current, 'total': total})
 
 
-def _baseline_loader(baseline_file):
+def _yaml_loader(baseline_file):
     with open('caselink/db_baseline/' + baseline_file) as base_fp:
         baseline = yaml.load(base_fp)
     return baseline
