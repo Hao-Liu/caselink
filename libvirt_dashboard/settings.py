@@ -39,7 +39,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'caselink',
+    'djcelery',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -120,19 +122,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-from celery.schedules import crontab
-
-CELERYBEAT_SCHEDULE = {
-    'update_polarion': {
-        'task': 'caselink.tasks.update_polarion',
-        'schedule': crontab(minute='*/15'),
-        'args': (),
-        'relative': True,
-    },
-    'update_linkage': {
-        'task': 'caselink.tasks.update_linkage',
-        'schedule': crontab(minute='*/3'),
-        'args': (),
-        'relative': True,
-    },
+REST_FRAMEWORK = {
+        'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
+        'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+        'PAGE_SIZE': 100,
 }

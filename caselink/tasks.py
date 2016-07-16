@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import yaml
 import re
 import logging
@@ -8,7 +10,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
-from celery import shared_task
+from celery import shared_task, current_task
 
 # pylint: disable=redefined-builtin
 try:
@@ -21,261 +23,236 @@ try:
 except ImportError:
     from HTMLParser import HTMLParser
 
-from caselink.models import WorkItem, Document, Change
-from caselink.models import AvocadoCase, TCMSCase, Error
-
-
-def update_polarion():
-    _update_polarion_db(_load_polarion())
-
-
-def update_linkage():
-    _update_linkage_db(_load_linkage())
-
-
-def update_changes():
-    _update_changes_db(_load_updates())
-
-
-def _load_polarion():
-    with open('base_polarion.yaml') as polarion_fp:
-        polarion = yaml.load(polarion_fp)
-    return polarion
-
-
-def _load_linkage():
-    with open('autotest_cases.yaml') as linkage_fp:
-        linkage = yaml.load(linkage_fp)
-    return linkage
-
-
-def _load_updates():
-    with open('updates.yaml') as updates_fp:
-        updates = yaml.load(updates_fp)
-    changes = {k: v['changes'] for k, v in updates.items() if 'changes' in v}
-    return changes
+from caselink.models \
+        import Error, Arch, Component, Framework, Project, Document, WorkItem, AutoCase, CaseLink
 
 
 @transaction.atomic
-def _update_polarion_db(polarion):
+def load_error():
+    """Load baseline Error"""
+    _load_error_db(_baseline_loader('base_error.yaml'))
+
+
+@transaction.atomic
+def load_project():
+    """Load baseline Project"""
+    _load_project_db(_baseline_loader('base_project.yaml'))
+
+
+@transaction.atomic
+def load_manualcase():
+    """Load baseline Manual cases"""
+    _load_manualcase_db(_baseline_loader('base_workitem.yaml'))
+
+
+@transaction.atomic
+def load_linkage():
+    """Load baseline linkage"""
+    _load_libvirt_ci_linkage_db(_baseline_loader('base_libvirt_ci_linkage.yaml'))
+
+
+@transaction.atomic
+def load_autocase():
+    """Load baseline Auto cases"""
+    _load_libvirt_ci_autocase_db(_baseline_loader('base_libvirt_ci_autocase.yaml'))
+
+
+@transaction.atomic
+def init_error_checking():
+    """Load baseline Auto cases"""
+    update_manualcase_error()
+    update_autocase_error()
+    update_linkage_error()
+
+
+@shared_task
+def update_linkage_error(link=None):
+    """Check for errors in linkage"""
+    if not link:
+        links = CaseLink.objects.all()
+    else:
+        links = [link]
+
+    current = 0
+    total = len(links)
+    direct_call = current_task.request.id is None
+
+    for link in links:
+        link.error_check(depth=0)
+
+        if not direct_call:
+            current += 1
+            current_task.update_state(state='PROGRESS',
+                                      meta={'current': current, 'total': total})
+
+
+@shared_task
+def update_manualcase_error(case=None):
+    """Check for errors in manual cases"""
+    if not case:
+        cases = WorkItem.objects.all()
+    else:
+        cases = [case]
+
+    current = 0
+    total = len(cases)
+    direct_call = current_task.request.id is None
+
+    for case in cases:
+        case.error_check(depth=0)
+
+        if not direct_call:
+            current += 1
+            current_task.update_state(state='PROGRESS',
+                                      meta={'current': current, 'total': total})
+
+@shared_task
+def update_autocase_error(case=None):
+    """Check for errors in auto cases"""
+    if not case:
+        cases = AutoCase.objects.all()
+    else:
+        cases = [case]
+
+    current = 0
+    total = len(cases)
+    direct_call = current_task.request.id is None
+
+    for case in cases:
+        case.error_check(depth=0)
+
+        if not direct_call:
+            current += 1
+            current_task.update_state(state='PROGRESS',
+                                      meta={'current': current, 'total': total})
+
+
+def _baseline_loader(baseline_file):
+    with open('caselink/db_baseline/' + baseline_file) as base_fp:
+        baseline = yaml.load(base_fp)
+    return baseline
+
+
+def _load_project_db(projects):
+    for project_id, project_item in projects.items():
+        Project.objects.create(
+            id = project_id,
+            name = project_item['name']
+        )
+
+
+def _load_error_db(errors):
+    for error_id, error_item in errors.items():
+        Error.objects.create(
+            id = error_id,
+            message = error_item['message']
+        )
+
+
+def _load_manualcase_db(polarion):
     for wi_id, case in polarion.items():
+
         # pylint: disable=no-member
-        workitem, _ = WorkItem.objects.get_or_create(wi_id=wi_id)
+        workitem, created = WorkItem.objects.get_or_create(id=wi_id)
+        if not created:
+            logging.error("Duplicated workitem '%s'" % wi_id)
+            continue
+
         workitem.title = case['title']
         workitem.type = case['type']
-        updated = timezone.make_aware(
-            case['updated'] - datetime.timedelta(hours=8))
-        workitem.updated = workitem.confirmed = updated
-        workitem.save()
+        workitem.commit = case['commit']
+        workitem.automation = 'automated' if case['automated'] else 'noautomated'
+
+        workitem.project, created = Project.objects.get_or_create(name=case['project'])
+        if created:
+            logging.error("Created not included project '%s'" % case['project'])
+            workitem.project.id = case['project']
+            workitem.project.save()
+
+        for arch_name in case['arch']:
+            arch, _ = Arch.objects.get_or_create(name=arch_name)
+            arch.workitems.add(workitem)
+            arch.save()
 
         for doc_id in case['documents']:
-            doc, _ = Document.objects.get_or_create(doc_id=doc_id)
+            doc, created = Document.objects.get_or_create(id=doc_id)
+            if created:
+                doc.title = doc_id
+                doc.component = Component.objects.get_or_create(name='libvirt')
             doc.workitems.add(workitem)
             doc.save()
 
+        for error_message in case['errors']:
+            error, created = Error.objects.get_or_create(message=error_message)
+            if created:
+                error.id = error_message
+                logging.error("Created not included error '%s'" % error_message)
+            error.workitems.add(workitem)
+            error.save()
 
-@transaction.atomic
-def _update_linkage_db(linkage):
+        workitem.save()
+
+
+def _load_libvirt_ci_linkage_db(linkage):
     # pylint: disable=no-member
-    multiple_polarion_error, _ = Error.objects.get_or_create(
-        name='More than one polarion for one auto case')
-
     for link in linkage:
-        wis = []
         wi_ids = link.get('polarion', {}).keys()
-        case_names = link.get('cases', [])
-        tcms_ids = link.get('tcms', {}).keys()
+        case_patterns = link.get('cases', [])
         automated = link.get('automated', True)
+        framework = link.get('framework', 'libvirt-ci')
         comment = link.get('comment', '')
         feature = link.get('feature', '')
+        title = link.get('title', '')
 
-        # Log error when wi_ids is not unique.
-        # Will remove this when cases are cleaned up.
-        if not wi_ids:
-            logging.error("No Polarion specified in linkage for %s",
-                          link.get('title', ''))
-        elif len(wi_ids) > 1:
-            logging.error("More than one polarion for one linkage for %s: %s",
-                          link.get('title', ''), wi_ids)
+        framework, _ = Framework.objects.get_or_create(name=framework)
 
+        #Legacy
+        #tcms_ids = link.get('tcms', {}).keys()
+
+        # Check for workitem deleted error
+        # Create dummy workitem to track error
         for wi_id in wi_ids:
-            try:
-                wi = WorkItem.objects.get(wi_id=wi_id)
-            except ObjectDoesNotExist:
-                logging.error("Work Item %s in linkage not found on Polarion",
-                              wi_id)
-                continue
+            wi, created = WorkItem.objects.get_or_create(id=wi_id)
+            if created:
+                wi.error = Error.objects.get(id="WORKITEM_DELETED")
+                wi.save()
 
-            if len(wi_ids) > 1:
-                wi.errors.add(multiple_polarion_error)
-
-            if automated:
-                wi.automation = 'automated'
-            else:
-                if comment:
-                    wi.comment = comment
-                    wi.automation = 'manualonly'
-                else:
-                    wi.automation = 'updating'
-            wi.feature = feature
-            wi.save()
-            wis.append(wi)
-
-        for tcmsid in tcms_ids:
-            case, _ = TCMSCase.objects.get_or_create(tcmsid=tcmsid)
-            for wi in wis:
-                case.workitems.add(wi)
-            case.save()
-
-        for name in case_names:
-            case, _ = AvocadoCase.objects.get_or_create(name=name)
-            for wi in wis:
-                case.workitems.add(wi)
-            case.save()
-
-
-def _convert_text(text):
-    lines = re.split(r'\<[bB][rR]/\>', text)
-    new_lines = []
-    for line in lines:
-        line = " ".join(line.split())
-        line = HTMLParser().unescape(line)
-        new_lines.append(line)
-    return '\n'.join(new_lines)
-
-
-def _diff_test_steps(before, after):
-    steps_before = before['steps']['TestStep']
-    steps_after = after['steps']['TestStep']
-
-    if not isinstance(steps_before, list):
-        steps_before = [steps_before]
-    if not isinstance(steps_after, list):
-        steps_after = [steps_after]
-
-    diff_txt = ''
-    if len(steps_before) == len(steps_after):
-        for idx in range(len(steps_before)):
-            step_before, result_before = [
-                _convert_text(text['content'])
-                for text in steps_before[idx]['values']['Text']]
-            step_after, result_after = [
-                _convert_text(text['content'])
-                for text in steps_after[idx]['values']['Text']]
-            if step_before != step_after:
-                diff_txt += 'Step %s changed:\n' % (idx + 1)
-                for line in difflib.unified_diff(step_before.splitlines(1),
-                                                 step_after.splitlines(1)):
-                    diff_txt += line
-                diff_txt += '\n'
-            if result_before != result_after:
-                diff_txt += 'Result %s changed:\n' % (idx + 1)
-                for line in difflib.unified_diff(result_before.splitlines(1),
-                                                 result_after.splitlines(1)):
-                    diff_txt += line
-                diff_txt += '\n'
-    else:
-        diff_txt = ('Steps count changed %s --> %s' %
-                    (len(steps_before), len(steps_after)))
-    return diff_txt
-
-
-def _check_diff(diff, wi_id=None):
-    field = diff['fieldName']
-    # Ignore irrelevant properties changing
-    if field in [
-            'updated', 'outlineNumber', 'caseautomation', 'status',
-            'previousStatus', 'approvals', 'tcmscaseid']:
-        return (field, None)
-
-    # Ignore parent item changing
-    if (field == 'linkedWorkItems' and
-            diff['added'] and diff['removed'] and
-            len(diff['added']['item']) == 1 and
-            len(diff['removed']['item']) == 1 and
-            diff['added']['item'][0]['role']['id'] == 'parent' and
-            diff['removed']['item'][0]['role']['id'] == 'parent'):
-        return (field, None)
-
-    after_txt = ''
-    before_txt = ''
-
-    if diff['added']:
-        adds = diff['added']['item']
-        for add in adds:
-            after_txt += str(add) + '\n'
-    if diff['removed']:
-        removes = diff['removed']['item']
-        for remove in removes:
-            before_txt += str(remove) + '\n'
-
-    if 'before' in diff or 'after' in diff:
-        before = diff.get('before', '')
-        after = diff.get('after', '')
-
-        if 'id' in before:
-            before = before['id']
-        if 'id' in after:
-            after = after['id']
-        if 'content' in before:
-            before = _convert_text(before['content'])
-        if 'content' in after:
-            after = _convert_text(after['content'])
-
-        before_txt += str(before) + '\n'
-        after_txt += str(after) + '\n'
-
-    if field == 'testSteps':
-        diff_txt = _diff_test_steps(before, after)
-    else:
-        diff_txt = ''
-        for line in difflib.unified_diff(
-                before_txt.splitlines(1),
-                after_txt.splitlines(1)):
-            diff_txt += line
-
-    return (field, diff_txt)
-
-
-@transaction.atomic
-def _update_changes_db(updates):
-    # pylint: disable=no-member
-    changed_error, _ = Error.objects.get_or_create(
-        name='Updates not confirmed')
-
-    for wi_id, changes in updates.items():
-        wi = WorkItem.objects.get(wi_id=wi_id)
-        if wi.automation != 'automated':
-            continue
-
-        # Sort changes according to revision numbers
-        changes = sorted(changes, key=lambda change: int(change['revision']))
-
-        changed = False
-        for change_obj in changes:
-            diffs = {}
-            for diff in change_obj['diffs']['item']:
-                field, diff_txt = _check_diff(diff)
-                if diff_txt:
-                    diffs[field] = diff_txt
-
-            if diffs:
-                revision = change_obj['revision']
-                change, _ = Change.objects.get_or_create(
-                    workitem=wi,
-                    revision=revision,
+        # Create linkage
+        for wi_id in wi_ids:
+            workitem = WorkItem.objects.get(id=wi_id)
+            for pattern in case_patterns:
+                linkage, created = CaseLink.objects.get_or_create(
+                    workitem=workitem,
+                    autocase_pattern=pattern
                 )
-                change.obj = yaml.dump(change_obj)
-                txt = ''
-                for field, diff_txt in diffs.items():
-                    txt += field + '\n'
-                    txt += diff_txt + '\n'
-                change.diff = txt
-                change.save()
-                changed = True
-                wi.errors.add(changed_error)
-            else:
-                # Update confirmed timestamps until major change found
-                if not changed:
-                    wi.confirmed = timezone.make_aware(change_obj['date'])
-        wi.save()
+                if created:
+                    linkage.framework = framework
+                    linkage.title = title
+                    linkage.save()
+                else:
+                    logging.error("Error in baseline db, duplicated linkage")
+                    logging.error(str(workitem))
+                    logging.error(str(pattern))
+
+
+def _load_libvirt_ci_autocase_db(autocases):
+    framework = "libvirt-ci"
+    framework, _ = Framework.objects.get_or_create(name=framework)
+    all_linkage = CaseLink.objects.all()
+
+    for case_id in autocases:
+        case = AutoCase.objects.create(
+            id=case_id,
+            framework=framework,
+            #start_commit=commit
+            #end_commit=commit
+        )
+
+        arch, _ = Arch.objects.get_or_create(name='')
+        case.archs.add(arch)
+        case.save()
+
+        for caselink in all_linkage:
+            if caselink.test_match(case):
+                caselink.autocases.add(case)
+                caselink.save()

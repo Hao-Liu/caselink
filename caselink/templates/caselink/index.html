@@ -1,240 +1,158 @@
 {% load staticfiles %}
 <html>
     <head>
-        <title>libvirt Manual-Auto Case Linkage</title>
-        <link rel="stylesheet" type="text/css" href="{% static "caselink/datatables.css" %}">
+        <title>{% block title %} CaseLink {% endblock %} </title>
         <script type="text/javascript" charset="utf8" src="//code.jquery.com/jquery-1.10.2.min.js"></script>
-        <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.js"></script>
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/googlecode.min.css">
+        <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.8/js/jquery.dataTables.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/js-cookie/2.0.4/js.cookie.min.js"></script>
-       	<link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.core.css" />
+        <script src="{% static "caselink/searchtable.js" %}"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+        <link rel="stylesheet" type="text/css" href="{% static "caselink/datatables.css" %}">
+        <link rel="stylesheet" type="text/css" href="{% static "caselink/caselink.css" %}">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/googlecode.min.css">
+        <link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.core.css" />
         <link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.default.css" id="toggleCSS" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     </head>
     <body>
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="{% url 'index' %}">CaseLink</a>
+                </div>
+                <div id="navbar" class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="#" data-toggle="modal" data-target="#task_panel">Tasks</a></li>
+                        <li><a href="{% url 'index' %}">Index</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="modal fade" id="task_panel" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Tasks</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="task_progress">
+                            <div class="progress progress-bar-proto">
+                                <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
+                                </div>
+                            </div>
+                            <div class="alert alert-success loading-proto" role="alert">Loading...</div>
+                            <div class="alert alert-success empty-proto" role="alert">There is no running task.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger">Cancel All Tasks</button>
+                        <button type="button" class="btn btn-info btn-op btn-auto-error">Autocase Error Check</button>
+                        <button type="button" class="btn btn-info btn-op btn-manual-error">Manualcase Error Check</button>
+                        <button type="button" class="btn btn-info btn-op btn-linkage-error">Linkage Error Check</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div>
+        </div>
+
+        <div class="container-fluid">
+            {% block content %}
+            <div class="container">
+                <div class="panel panel-default">
+                    <div class="panel-heading">Table</div>
+                    <div class="panel-body">
+                        <a type="button" class="btn btn-info" href="a2m">Auto to Manual case linkage</a>
+                        <a type="button" class="btn btn-info" href="m2a">Manual to Auto case linkage</a>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">API</div>
+                    <div class="panel-body">
+                        <a type="button" class="btn btn-default" href="manual">Manual Case API</a>
+                        <a type="button" class="btn btn-default" href="auto">Auto case API</a>
+                        <a type="button" class="btn btn-default" href="link">Linkage API</a>
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+        <script src="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.min.js"></script>
         <script>
-            function do_update ( row_id, id ) {
-                table = $('#sortable-table').DataTable();
-                table.row(row_id).remove().draw();
-                $.post(
-                    "update",
-                    {
-                        'csrfmiddlewaretoken': '{{ csrf_token }}',
-                        'id': id,
-                    },
-                    function ( response ) {
-                        console.log(response);
-                        alertify.alert("Updated " + id);
-                    }
-                );
-            }
-            function do_ignore ( row_id, id ) {
-                table = $('#sortable-table').DataTable();
-                table.row(row_id).remove().draw();
-                $.post(
-                    "ignore",
-                    {
-                        'csrfmiddlewaretoken': '{{ csrf_token }}',
-                        'id': id,
-                    },
-                    function ( response ) {
-                        console.log(response);
-                        alertify.alert("Ignored " + id);
-                    }
-                );
-            }
-        </script>
-        <h3 align='center'>libvirt Manual-Auto Case Linkage</h3>
-        <table id="sortable-table" class="display">
-            <thead>
-                <th></th>
-                <th>Polarion</th>
-                <th>Title</th>
-                <th>Documents</th>
-                <th>Automation</th>
-                <th>Error</th>
-                <th>Feature</th>
-                <th>Updated</th>
-                <th>TCMS</th>
-                <th>Comment</th>
-                <th>Diffs</th>
-                <th>Cases</th>
-            </thead>
-            <tfoot>
-                <th></th>
-                <th>Polarion</th>
-                <th>Title</th>
-                <th>Documents</th>
-                <th>Automation</th>
-                <th>Error</th>
-                <th>Feature</th>
-                <th>Updated</th>
-                <th>TCMS</th>
-                <th>Comment</th>
-                <th>Diffs</th>
-                <th>Cases</th>
-            </tfoot>
-        </table>
+            var polling = false;
+            $(document).ready(function() {
+                var task_progress = $("#task_progress");
+                var progress_bar = $("#task_progress .progress-bar-proto").detach();
+                var loading = $("#task_progress .loading-proto");
+                var empty = $("#task_progress .empty-proto").detach();
+                $('#task_panel').on('hidden.bs.modal', function (e) {
+                    polling = false;
+                })
+                $('#task_panel').on('show.bs.modal', function (e) {
+                    polling = true;
+                    poll_tasks();
+                })
 
-        <script type="text/javascript">
-        $(document).ready(function() {
-            function format ( row ) {
-                d = row.data();
-                // `d` is the original data object for the row
-                var diff_txt = ''
-                if(d.diffs.length > 0) {
-                    diff_txt += 'Do these changes need auto case update?'
-                    diff_txt += ' <button type="button" onclick="do_update(\''+
-                        row.index()+'\', \''+
-                        d.polarion+'\');" >Yes</button>';
-                    diff_txt += ' <button type="button" onclick="do_ignore(\''+
-                        row.index()+'\', \''+
-                        d.polarion+'\');" >No</button>';
-                    diff_txt += '<pre><code class="diff">'+d.diffs+'</code></pre>';
-                }
-                var table_txt = '<table cellpadding="0" cellspacing="0" '+
-                    'border="0" style="padding-left:0px;">';
-                if(d.tcms) {
-                    table_txt += '<tr>'+
-                        '<td>TCMS case IDs:</td>'+
-                        '<td>'+d.tcms+'</td>'+
-                    '</tr>';
-                }
-                if(d.cases.length > 0) {
-                    table_txt += '<tr>'+
-                    '<tr>'+
-                        '<td>Autotest cases:</td>'+
-                        '<td>'+d.cases+'</td>'+
-                    '</tr>';
-                }
-                if(d.comment) {
-                    table_txt += '<tr>'+
-                        '<td>Comment:</td>'+
-                        '<td>'+d.comment+'</td>'+
-                    '</tr>';
-                }
-                if(d.errors) {
-                    table_txt += '<tr>'+
-                        '<td>Errors:</td>'+
-                        '<td>'+d.errors+'</td>'+
-                    '</tr>';
-                }
-                if(diff_txt) {
-                    table_txt += '<tr>'+
-                        '<td>Diffs:</td>'+
-                        '<td>'+ diff_txt +'</td>'+
-                    '</tr>';
-                }
-                table_txt += '</table>';
-                return table_txt;
-            }
+                function gen_progress_bar(cur, total){
+                    bar = progress_bar.clone();
+                    progress = bar.find(".progress-bar");
+                    percent = (cur/total) * 100.0;
 
-            // Setup - add a text input to each footer cell
-            $('#sortable-table tfoot th').each( function () {
-                var title = $('#sortable-table thead th').eq( $(this).index() ).text();
-                if ( title.length > 0 ) {
-                    $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
+                    progress.text("" + cur + "/" + total + "");
+                    progress
+                    .attr("aria-valuenow", cur)
+                    .attr("aria-valuemax", total)
+                    .attr("aria-valuemin", 0)
+                    .css("min-width", "6em")
+                    .css("width", "" + percent + "%");
+
+                    return bar
                 }
-            } );
 
-            var table = $('#sortable-table').DataTable( {
-                "ajax": "data",
-                "iDisplayLength": 20,
-                "bAutoWidth": false,
-                "initComplete": function () {
-                    this.api().columns().every( function () {
-                        var column = this;
-                        var title = $(column.header()).text();
-                        if ( title.length == 0 || ['Title', 'Polarion', 'TCMS', 'Comment', 'Cases'].indexOf(title) > -1 ) {
-                            return;
-                        }
-                        var select = $('<select><option value=""></option></select>')
-                            .appendTo( $(column.footer()).empty() )
-                            .on( 'change', function () {
-                                var val = $.fn.dataTable.util.escapeRegex(
-                                    $(this).val()
-                                );
-                                column
-                                    .search( val ? '^'+val+'$' : '', true, false )
-                                    .draw();
-                            } );
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        } );
-                    } );
-                },
-                "columns": [
-                    {
-                        "data":           null,
-                        "className":      'details-control',
-                        "orderable":      false,
-                        "defaultContent": '',
-                        "width":          '10',
-                    },
-                    {
-                        "data": "polarion",
-                        "render": function( data ) {
-                            return '<a href="https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id='+data+'">'+data+'</a>';
-                        }
-                    },
-                    { "data": "title" },
-                    { "data": "documents"},
-                    { "data": "automation" },
-                    { "data": "errors" },
-                    { "data": "feature" },
-                    { "data": "updated"},
-                    { "data": "tcms" },
-                    { "data": "comment" },
-                    { "data": "diffs" },
-                    { "data": "cases" },
-                ],
-                "createdRow": function ( row, data, index ) {
-                    if ( data.errors.length > 0 ) {
-                        $('td', row).eq(0).addClass('errors');
-                    }
-                }
-            } );
-            table.columns().every( function () {
-                    var column = this;
-                    var title = $(column.header()).text();
-                    if ( ['TCMS', 'Comment', 'Diffs', 'Cases', 'Updated', 'Feature'].indexOf(title) > -1 ) {
-                        this.visible(false);
-                    }
-                    });
-
-            // Apply the search
-            table.columns().every( function () {
-                var that = this;
-
-                $( 'input', this.footer() ).on( 'keyup change', function () {
-                    that
-                        .search( this.value )
-                        .draw();
-                } );
-            } );
-
-            // Add event listener for opening and closing details
-            $('#sortable-table tbody').on('click', 'td.details-control', function () {
-                var tr = $(this).closest('tr');
-                var row = table.row( tr );
-
-                if ( row.child.isShown() ) {
-                    // This row is already open - close it
-                    row.child.hide();
-                    tr.removeClass('shown');
-                }
-                else {
-                    // Open this row
-                    row.child( format(row) ).show();
-                    tr.addClass('shown');
-                    $('pre code').each(function(i, block) {
-                        hljs.highlightBlock(block);
+                function op_trigger(url){
+                    $.ajax({
+                        'url':url,
+                        'cache': false
+                    }).done(function(data){
+                        alert(data.message);
                     });
                 }
-            } );
 
-        } );
+                $(".btn-auto-error").click(function(){ op_trigger('control?async=true&trigger=autocase_error_check'); });
+                $(".btn-manual-error").click(function(){ op_trigger('control?async=true&trigger=manualcase_error_check'); });
+                $(".btn-linkage-error").click(function(){ op_trigger('control?async=true&trigger=linkage_error_check'); });
+
+                function poll_tasks(){
+                    $.ajax({
+                        'url':'control',
+                        'cache': false
+                    })
+                    .done(function(data){
+                        loading.remove();
+                        task_progress.empty()
+                        if($.isEmptyObject(data))
+                            task_progress.append(empty);
+                        for(i in data){
+                            task_progress.append("<h3>"+i+"</h3>");
+                            if(data[i].meta){
+                                cur = data[i].meta.current;
+                                total = data[i].meta.total;
+                                task_progress.append(gen_progress_bar(cur,total));
+                            }
+                        }
+                    });
+                    if(polling)
+                        setTimeout(poll_tasks, 1000);
+                }
+            });
         </script>
-		<script src="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.min.js"></script>
     </body>
 </html>
