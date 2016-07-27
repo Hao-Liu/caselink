@@ -2,6 +2,12 @@
 
 #export DJANGO_SETTINGS_MODULE=libvirt_dashboard.settings
 
+echo "select 'drop table if exists \"' || tablename || '\" cascade;'
+from pg_tables
+where schemaname = 'public';" | python2 ./manage.py dbshell | python2 ./manage.py dbshell
+
+echo "drop table django_migration;" | python2 ./manage.py dbshell
+
 # Reset environment
 pkill -f celery
 sudo systemctl restart rabbitmq-server
