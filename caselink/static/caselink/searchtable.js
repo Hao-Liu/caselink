@@ -11,12 +11,24 @@ $.fn.extend({
 
         initCompleteNext = param.initComplete;
         param.initComplete = function(setting, json){
+            selectorColumns = {}
+            if(param.selectorColumns){
+                for (var i = 0, len = param.selectorColumns.length; i < len; i++) {
+                    if(typeof param.selectorColumns[i] === 'object')
+                        selectorColumns[param.selectorColumns[i].column] = param.selectorColumns[i];
+                    else if(typeof param.selectorColumns[i] === 'string')
+                        selectorColumns[param.selectorColumns[i]] = {};
+                }
+            }
             this.api().columns().every(function(){
                 // Use selector filter to replace text input filter
                 // for specified columns
                 var column = this;
                 var title = $(column.header()).text();
-                if (param.selectorColumns && param.selectorColumns.indexOf(title) > -1){
+                if (title in selectorColumns){
+                    var render = selectorColumns[title].render;
+                    if(!render)
+                        render = function(d){return d;}
                     var selections = [];
                     var select = $('<select><option value=""></option></select>')
                     .appendTo($(column.footer()).empty())
@@ -28,10 +40,10 @@ $.fn.extend({
                     });
                     column.data().each(function(d, j){
                         if($.isArray(d)){
-                            selections = selections.concat($.map(d, function(n){return n}));
+                            selections = selections.concat(render($.map(d, function(n){return n})));
                         }
                         else{
-                            selections = selections.concat(d);
+                            selections = selections.concat(render(d));
                         }
                     });
                     $.each(

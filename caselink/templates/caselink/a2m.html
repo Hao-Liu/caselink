@@ -24,7 +24,16 @@
             "ajax": "data?type=a2m",
             "iDisplayLength": 20,
             "bAutoWidth": false,
-            "selectorColumns": ['Documents', 'Errors'],
+            "selectorColumns": [
+                {
+                    column: 'Documents',
+                    render: prettier,
+                },
+                {
+                    column: 'Errors',
+                    render: prettier,
+                }
+            ],
             "columns": [
                 { "data": "case" },
                 {
@@ -42,13 +51,13 @@
                 {
                     "data": "documents",
                     "render": function(data){
-                        return $.map(data, function(n){return n}).join('<br>');
+                        return prettier($.map(data, function(n){return n}).join('<br>'));
                     }
                 },
                 {
                     "data": "errors",
                     "render": function(data){
-                        return $.map(data, function(n){return n}).join('<br>');
+                        return prettier($.map(data, function(n){return n}).join('<br>'));
                     }
                 },
             ],

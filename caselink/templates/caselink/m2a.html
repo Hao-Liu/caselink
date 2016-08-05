@@ -60,7 +60,20 @@
             "ajax": "data",
             "iDisplayLength": 20,
             "bAutoWidth": false,
-            "selectorColumns": ['Documents', 'Automation', 'Errors'],
+            "selectorColumns": [
+                {
+                    column: 'Documents',
+                    render: prettier,
+                },
+                {
+                    column: 'Automation',
+                    render: prettier,
+                },
+                {
+                    column: 'Errors',
+                    render: prettier,
+                },
+            ],
             "columns": [
                 {
                     "data":           null,
@@ -79,23 +92,25 @@
                 {
                     "data": "documents",
                     "render": function( data ) {
-                        return data.join('<br>');
+                        return prettier(data.join('<br>'));
                     }
                 },
                 { "data": "automation" },
                 {
                     "data": "errors",
                     "render": function( data ) {
-                        return data.join('<br>');
+                        return prettier(data.join('<br>'));
                     }
                 },
                 {
                     "data": "cases",
-                    "visible": false
+                    "visible": false,
+                    "render": prettier,
                 },
                 {
                     "data": "patterns",
-                    "visible": false
+                    "visible": false,
+                    "render": prettier,
                 },
             ],
             "createdRow": function(row, data, index){
