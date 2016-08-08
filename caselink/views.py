@@ -289,6 +289,8 @@ def task_control(request):
 
     workers = inspect()
     task_status = {}
+    if workers.active() is None:
+        return JsonResponse(task_status)
     for worker, tasks in workers.active().items():
         for task in tasks:
             res = AsyncResult(task['id'])
