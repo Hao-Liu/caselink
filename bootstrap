@@ -2,26 +2,57 @@
 
 #export DJANGO_SETTINGS_MODULE=libvirt_dashboard.settings
 
-echo "select 'drop table if exists \"' || tablename || '\" cascade;'
-from pg_tables
-where schemaname = 'public';" | python2 ./manage.py dbshell | python2 ./manage.py dbshell
+function clean_server()
+{
+    # Reset environment and db
+    echo "select 'drop table if exists \"' || tablename || '\" cascade;'
+    from pg_tables
+    where schemaname = 'public';" | python2 ./manage.py dbshell | python2 ./manage.py dbshell
 
-echo "drop table django_migrations;" | python2 ./manage.py dbshell
+    echo "drop table django_migrations;" | python2 ./manage.py dbshell
 
-# Reset environment
-pkill -f celery
-sudo systemctl restart rabbitmq-server
-rm -rf caselink/migrations celerybeat-schedule db.sqlite3
+    pkill -f celery
+    sudo systemctl restart rabbitmq-server
+    rm -rf caselink/migrations celerybeat-schedule db.sqlite3
+}
 
-# Reset database
-python2 ./manage.py makemigrations caselink
-python2 ./manage.py migrate
+function setup_server()
+{
+    # Setup database
+    python2 ./manage.py makemigrations caselink
+    python2 ./manage.py migrate
 
-# Start celery worker
-celery worker -A libvirt_dashboard -l info -f celery_worker.log --purge --detach
+    touch celery_worker.log
+    chown nobody:nobody celery_worker.log
 
-# Start initial database
-python2 ./setup_db.py
+    # Start initial database
+    python2 ./setup_db.py
+}
 
-# Run server
-python2 ./manage.py runserver 0.0.0.0:8888
+
+function start_server()
+{
+    # Start celery worker
+    sudo -u nobody celery worker -A libvirt_dashboard -l info -f celery_worker.log --purge --detach
+
+    # Run server
+    sudo -u nobody python2 ./manage.py runserver 0.0.0.0:8888
+}
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --clean )
+            clean_server
+            setup_server
+            ;;
+        * )
+            echo "
+            Usage:
+                --clean: Clean up database and enviroment
+            "
+            exit 1
+    esac
+    shift
+done
+
+start_server
