@@ -6,7 +6,7 @@ echo "select 'drop table if exists \"' || tablename || '\" cascade;'
 from pg_tables
 where schemaname = 'public';" | python2 ./manage.py dbshell | python2 ./manage.py dbshell
 
-echo "drop table django_migration;" | python2 ./manage.py dbshell
+echo "drop table django_migrations;" | python2 ./manage.py dbshell
 
 # Reset environment
 pkill -f celery
