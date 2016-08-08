@@ -11,13 +11,7 @@ django.setup()
 
 from django.db import transaction
 
-from caselink.tasks import load_error
-from caselink.tasks import load_project
-from caselink.tasks import load_manualcase
-from caselink.tasks import load_linkage
-from caselink.tasks import load_autocase
-from caselink.tasks import load_failure
-from caselink.tasks import init_error_checking
+from caselink.tasks import *
 
 def run():
     print('Loading Error')
