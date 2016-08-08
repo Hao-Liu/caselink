@@ -6,6 +6,7 @@ import logging
 import difflib
 import datetime
 
+from django.core import serializers
 from django.utils import timezone
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -58,16 +59,24 @@ def load_autocase():
 
 @transaction.atomic
 def load_failure():
-    """Load baseline Auto cases"""
+    """Load baseline Auto failure"""
     _load_bug(_yaml_loader('base_failures.yaml'))
 
 
 @transaction.atomic
 def init_error_checking():
-    """Load baseline Auto cases"""
+    """Check for error."""
     update_manualcase_error()
     update_autocase_error()
     update_linkage_error()
+
+
+@transaction.atomic
+def init_linkage():
+    """Link cases according by pattern"""
+    for case in AutoCase.objects.all():
+        case.autolink()
+        case.save()
 
 
 @shared_task
@@ -291,3 +300,122 @@ def _load_bug(failures):
                 bug=bug
             )
             case_failure.autolink()
+
+
+@shared_task
+def dump_all_db(filename):
+    with open(filename, 'w+') as base_fp:
+        for Model in [Error, Framework, Project, Document, #Meta models
+                      WorkItem, AutoCase, CaseLink, Bug, AutoCaseFailure]:
+            base_fp.write(serializers.serialize('yaml', Model.objects.all(), fields=Model._min_dump))
+
+
+@shared_task
+@transaction.atomic
+def restore_all_db(filename):
+    with open(filename) as fl:
+        data = fl.read()
+        for obj in serializers.deserialize("yaml", data):
+            obj.save()
+
+
+@shared_task
+@transaction.atomic
+def clean_all_db():
+    Component.objects.all().delete()
+    Arch.objects.all().delete()
+
+    AutoCaseFailure.objects.all().delete()
+    Bug.objects.all().delete()
+    CaseLink.objects.all().delete()
+    AutoCase.objects.all().delete()
+    WorkItem.objects.all().delete()
+    Document.objects.all().delete()
+    Project.objects.all().delete()
+    Framework.objects.all().delete()
+    Error.objects.all().delete()
+
+
+def _save_db(filename, Model):
+    with open(filename, 'w+') as base_fp:
+        base_fp.write(serializers.serialize('yaml', Model.objects.all(), fields=Model._min_dump))
+
+
+def save_error_db(filename):
+    _save_db(filename, Error)
+
+
+def save_framework_db(filename):
+    _save_db(filename, Framework)
+
+
+def save_project_db(filename):
+    _save_db(filename, Project)
+
+
+def save_document_db(filename):
+    _save_db(filename, Document)
+
+
+def save_workitem_db(filename):
+    _save_db(filename, WorkItem)
+
+
+def save_autocase_db(filename):
+    _save_db(filename, AutoCase)
+
+
+def save_caselink_db(filename):
+    _save_db(filename, CaseLink)
+
+
+def save_bug_db(filename):
+    _save_db(filename, Bug)
+
+
+def save_failure_db(filename):
+    _save_db(filename, AutoCase)
+
+
+@transaction.atomic
+def restore_db(filename):
+    with open(filename) as fl:
+        data = fl.read()
+        for obj in serializers.deserialize("yaml", data):
+            obj.save()
+
+
+def restore_error_db(filename):
+    restore_db(filename)
+
+
+def restore_framework_db(filename):
+    restore_db(filename)
+
+
+def restore_project_db(filename):
+    restore_db(filename)
+
+
+def restore_document_db(filename):
+    restore_db(filename)
+
+
+def restore_workitem_db(filename):
+    restore_db(filename)
+
+
+def restore_autocase_db(filename):
+    restore_db(filename)
+
+
+def restore_caselink_db(filename):
+    restore_db(filename)
+
+
+def restore_bug_db(filename):
+    restore_db(filename)
+
+
+def restore_failure_db(filename):
+    restore_db(filename)

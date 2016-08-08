@@ -27,18 +27,22 @@ def test_pattern_match(pattern, casename):
 class Error(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     message = models.CharField(max_length=65535, blank=True)
+    _min_dump = ('id', 'message',)
     def __str__(self):
         return self.id + ":" + self.message
 
 
+
 class Arch(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
+    _min_dump = ()
     def __str__(self):
         return self.name
 
 
 class Component(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
+    _min_dump = ()
     def __str__(self):
         return self.name
 
@@ -46,6 +50,7 @@ class Component(models.Model):
 class Framework(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
     components = models.ManyToManyField(Component)
+    _min_dump = ('name', 'components', )
     def __str__(self):
         return self.name
 
@@ -53,6 +58,7 @@ class Framework(models.Model):
 class Project(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
+    _min_dump = ('id', 'name',)
     def __str__(self):
         return self.name
 
@@ -61,6 +67,7 @@ class Document(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     components = models.ManyToManyField(Component)
     title = models.CharField(max_length=65535)
+    _min_dump = ('id', 'component', 'title', )
     def __str__(self):
         return self.id
 
@@ -78,6 +85,8 @@ class WorkItem(models.Model):
 
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)
+
+    _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs', 'documents', )
 
     def __str__(self):
         return self.id
@@ -140,6 +149,7 @@ class AutoCase(models.Model):
 
     #Field used to perform runtime error checking
     #error_related = models.ManyToManyField('self', blank=True)
+    _min_dump = ('id', 'archs', 'framework', 'start_commit', 'end_commit', )
 
     def get_related(self):
         """Get related objects for error cheking"""
@@ -152,6 +162,10 @@ class AutoCase(models.Model):
 
     def autolink(self):
         for link in CaseLink.objects.all():
+            if link.test_match(self):
+                link.autocases.add(self)
+                link.save()
+        for link in AutoCaseFailure.objects.all():
             if link.test_match(self):
                 link.autocases.add(self)
                 link.save()
@@ -185,6 +199,8 @@ class CaseLink(models.Model):
 
     # Legacy
     title = models.CharField(max_length=255, blank=True)
+
+    _min_dump = ('workitem', 'autocase_pattern', 'framework', 'title', )
 
     class Meta:
         unique_together = ("workitem", "autocase_pattern",)
@@ -242,7 +258,10 @@ class Bug(models.Model):
     """
     id = models.CharField(max_length=255, primary_key=True)
     manualcases = models.ManyToManyField('WorkItem', blank=True, related_name='bugs')
+    errors = models.ManyToManyField(Error, blank=True, related_name='bugs')
     #autocase_failures defined in AutoCaseFailure
+
+    _min_dump = ('id', 'manualcases', )
 
     @property
     def autocases(self):
@@ -250,6 +269,10 @@ class Bug(models.Model):
         for failure in self.autocase_failures.all():
             cases += failure.autocases.all()
         return cases
+
+    def error_check(self, depth=1):
+        # TODO
+        pass
 
     def __str__(self):
         return self.id
@@ -263,6 +286,9 @@ class AutoCaseFailure(models.Model):
     bug = models.ForeignKey('Bug', related_name='autocase_failures', blank=True, null=True)
     failure_regex = models.CharField(max_length=65535)
     autocase_pattern = models.CharField(max_length=65535)
+    errors = models.ManyToManyField(Error, blank=True, related_name='autocase_failures')
+
+    _min_dump = ('type', 'framework', 'bug', 'failure_regex', 'autocase_pattern', )
 
     class Meta:
         unique_together = ("failure_regex", "autocase_pattern",)
@@ -284,6 +310,10 @@ class AutoCaseFailure(models.Model):
             if self.test_match(case):
                 self.autocases.add(case)
         self.save()
+
+    def error_check(self, depth=1):
+        # TODO
+        pass
 
     def __str__(self):
         return self.autocase_pattern
