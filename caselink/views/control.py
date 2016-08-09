@@ -121,7 +121,16 @@ def backup(request):
     )
 
 
-def backup_download(request, filename=None):
+def backup_instance(request, filename=None):
+    delete = True if request.GET.get('delete', '') == 'true' else False
+    if delete:
+        try:
+            os.remove(BASE_DIR + "/" + filename)
+        except OSError:
+            raise HttpResponseServerError()
+        else:
+            return JsonResponse({'message': 'Done'})
+
     with open(BASE_DIR + "/" + filename) as file:
         data = file.read()
     response = HttpResponse(data, content_type='text/plain')

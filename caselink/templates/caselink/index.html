@@ -75,6 +75,7 @@
                                 <li class="list-group-item backup-item">
                                     <a href="javascript:void(0)"><i class="fa fa-download pull-right backup-download" aria-hidden="true">&nbspDownload&nbsp</i></a>
                                     <a href="javascript:void(0)"><i class="fa fa-medkit pull-right backup-restore" aria-hidden="true">&nbspRestore&nbsp</i></a>
+                                    <a href="javascript:void(0)"><i class="fa fa-trash pull-right backup-delete" aria-hidden="true">&nbspDelete&nbsp</i></a>
                                 </li>
                             </ul>
                         </div>
@@ -182,6 +183,10 @@
                 $("#backup_list .list-group").on('click', '.backup-restore', function(){
                     yaml = $(this).closest('li').clone().children().remove().end().text().trim();
                     ajax_with_alert('control/restore/'+ yaml);
+                });
+                $("#backup_list .list-group").on('click', '.backup-delete', function(){
+                    yaml = $(this).closest('li').clone().children().remove().end().text().trim();
+                    ajax_with_alert('control/backup/'+ yaml + '?delete=true');
                 });
 
                 function poll_status(){

@@ -32,7 +32,7 @@ urlpatterns = [
     url(r'^control/task$', control.task, name='task_list'),
     url(r'^control/trigger$', control.trigger, name='task_trigger'),
     url(r'^control/backup$', control.backup, name='backup_list'),
-    url(r'^control/backup/(?P<filename>.+\.yaml)$', control.backup_download, name='backup_download'),
+    url(r'^control/backup/(?P<filename>.+\.yaml)$', control.backup_instance, name='backup_download'),
     url(r'^control/restore/(?P<filename>.+\.yaml)$', control.restore, name='restore'),
     url(r'^control/upload$', control.upload, name='upload'),
 ]
