@@ -9,7 +9,11 @@ function clean_server()
     from pg_tables
     where schemaname = 'public';" | python2 ./manage.py dbshell | python2 ./manage.py dbshell
 
+    sleep 1
+
     echo "drop table django_migrations;" | python2 ./manage.py dbshell
+
+    sleep 1
 
     pkill -f celery
     sudo systemctl restart rabbitmq-server
@@ -23,6 +27,7 @@ function setup_server()
     python2 ./manage.py migrate
 
     touch celery_worker.log
+    chown nobody:nobody caselink/backups
     chown nobody:nobody celery_worker.log
 
     # Start initial database
