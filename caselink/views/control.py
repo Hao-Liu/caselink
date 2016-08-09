@@ -1,8 +1,10 @@
 import os
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.http import Http404
 from django.db import IntegrityError, OperationalError, transaction
+from django.shortcuts import render_to_response
+from django import forms
 
 from caselink.models import *
 from caselink.tasks import *
@@ -120,10 +122,12 @@ def backup(request):
 
 
 def backup_download(request, filename=None):
-    return JsonResponse({
-        'filename': filename,
-        'message': 'Not implemented'}
-    )
+    with open(BASE_DIR + "/" + filename) as file:
+        data = file.read()
+    response = HttpResponse(data, content_type='text/plain')
+    response['Content-Length'] = os.path.getsize(BASE_DIR + "/" + filename)
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    return response
 
 
 def restore(request, filename=None):
@@ -135,8 +139,13 @@ def restore(request, filename=None):
 
 
 def upload(request):
-    return JsonResponse({
-        'message': 'Not implemented'}
-    )
-
-
+    if request.method == 'POST' and request.FILES['file']:
+        i = 0
+        while os.path.exists(BASE_DIR + "/upload-%s.yaml" % i):
+            i += 1
+        with open(BASE_DIR + "/upload-%s.yaml" % i, "w+") as fl:
+            for chunk in request.FILES['file'].chunks():
+                fl.write(chunk)
+        return render_to_response('caselink/popup.html', {'message': 'Upload successful'})
+    else:
+        return HttpResponseBadRequest()

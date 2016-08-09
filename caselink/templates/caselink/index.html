@@ -63,6 +63,10 @@
                         </div>
                         <div class="panel panel-default" id="backup_list">
                             <div class="panel-heading">Backup List
+                                <form action="control/upload" method="post" enctype="multipart/form-data" class="hidden" id="backup_upload_form">
+                                    {% csrf_token %}
+                                    <input type="file" name='file' id="backup_upload_input">
+                                </form>
                                 <a href="javascript:void(0)"><i class="fa fa-upload pull-right backup-upload" aria-hidden="true">&nbspUpload&nbsp</i></a>
                                 <a href="javascript:void(0)"><i class="fa fa-plus pull-right backup-new" aria-hidden="true">&nbspNew&nbsp</i></a>
                             </div>
@@ -163,9 +167,21 @@
                 $(".btn-manual-error").click(function(){ ajax_with_alert('control/trigger?async=true&trigger=manualcase_error_check'); });
                 $(".btn-linkage-error").click(function(){ ajax_with_alert('control/trigger?async=true&trigger=linkage_error_check'); });
                 $(".backup-new").click(function(){ ajax_with_alert('control/trigger?async=true&trigger=dump_all_db'); });
+                $(".backup-upload").click(function(){
+                    $('#backup_upload_input').click();
+                });
+                $('#backup_upload_input').change(function() {
+                    console.log("changed")
+                    $('#backup_upload_form').submit();
+                });
+                $("#backup_list .list-group").on('click', '.backup-download', function(){
+                    yaml = $(this).closest('li').clone().children().remove().end().text().trim();
+                    top.location.href = 'control/backup/' + yaml;
+                    console.log( 'control/backup/' + yaml);
+                });
                 $("#backup_list .list-group").on('click', '.backup-restore', function(){
-                    console.log('control/restore/'+$(this).closest('li').clone().children().remove().end().text().trim());
-                    ajax_with_alert('control/restore/'+$(this).closest('li').clone().children().remove().end().text().trim());
+                    yaml = $(this).closest('li').clone().children().remove().end().text().trim();
+                    ajax_with_alert('control/restore/'+ yaml);
                 });
 
                 function poll_status(){
