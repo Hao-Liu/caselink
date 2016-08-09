@@ -306,9 +306,9 @@ def _load_bug(failures):
 
 
 @shared_task
-def dump_all_db(filename=None):
-    if not filename:
-        filename=BASE_DIR + "/" + str(datetime.datetime.now().isoformat()) + ".yaml"
+def dump_all_db():
+    #TODO Base dir
+    filename=BASE_DIR + "/" + str(datetime.datetime.now().isoformat()) + ".yaml"
     with open(filename, 'w+') as base_fp:
         for Model in [Error, Framework, Project, Document, #Meta models
                       WorkItem, AutoCase, CaseLink, Bug, AutoCaseFailure]:
@@ -339,6 +339,12 @@ def clean_all_db():
     Project.objects.all().delete()
     Framework.objects.all().delete()
     Error.objects.all().delete()
+
+
+@shared_task
+def clean_and_restore(filename):
+    clean_all_db()
+    restore_all_db(filename)
 
 
 def _save_db(filename, Model):

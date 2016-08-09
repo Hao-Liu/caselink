@@ -1,3 +1,5 @@
+import os
+
 from django.http import JsonResponse
 from django.http import Http404
 from django.db import IntegrityError, OperationalError, transaction
@@ -8,59 +10,107 @@ from caselink.tasks import *
 from celery.task.control import inspect
 from celery.result import AsyncResult
 
+BASE_DIR = 'caselink/backups'
 
-def task(request):
-    cancel = True if request.GET.get('cancel', '') == 'true' else False
-
+def _get_tasks():
     workers = inspect()
-    task_status = {}
     if workers.active() is None:
-        return JsonResponse(task_status)
-    for worker, tasks in workers.active().items():
+        return None
+    return workers.active().items()
+
+
+def _get_tasks_status():
+    task_status = {}
+    tasks = _get_tasks()
+    if not tasks:
+        return {}
+    for worker, tasks in _get_tasks():
         for task in tasks:
             res = AsyncResult(task['id'])
             task_status[task['name']] = {
                 'state': res.state,
                 'meta': res.info
             }
-            if cancel:
-                res.revoke(terminate=True)
-                task_status[task['name']]['canceled'] = True
-    return JsonResponse(task_status)
+    return task_status
+
+
+def _cancel_task():
+    task_status = {}
+    tasks = _get_tasks()
+    if not tasks:
+        return {}
+    for worker, tasks in _get_tasks():
+        for task in tasks:
+            res = AsyncResult(task['id'])
+            task_status[task['name']] = {
+                'state': res.state,
+                'meta': res.info
+            }
+            res.revoke(terminate=True)
+            task_status[task['name']]['canceled'] = True
+    return task_status
+
+
+def _schedule_task(task_name, async_task=True):
+
+    if 'linkage_error_check' == task_name:
+        operations = update_linkage_error
+    elif 'autocase_error_check' == task_name:
+        operations = update_autocase_error
+    elif 'manualcase_error_check' == task_name:
+        operations = update_manualcase_error
+    elif 'dump_all_db' == task_name:
+        operations = dump_all_db
+    else:
+        return {'message': 'Unknown task'}
+
+    if not async_task:
+        try:
+            with transaction.atomic():
+                operations()
+        except OperationalError:
+            return {'message': 'DB Locked'}
+        except IntegrityError:
+            return {'message': 'Integrity Check Failed'}
+        return {'message': 'done'}
+    else:
+        operations.apply_async()
+        return {'message': 'queued'}
+
+
+def _get_backup_list():
+    backup_list = []
+    for file in os.listdir('caselink/backups'):
+        if file.endswith(".yaml"):
+            backup_list.append(file)
+    return backup_list
+
+
+def overview(request):
+    return JsonResponse({
+        'task': _get_tasks_status(),
+        'backup': _get_backup_list(),
+    })
+
+
+def task(request):
+    return JsonResponse(_get_tasks_status())
 
 
 def trigger(request):
+    results = {}
 
-    operations = []
-
+    cancel = True if request.GET.get('cancel', '') == 'true' else False
     async = True if request.GET.get('async', '') == 'true' else False
+    operations = request.GET.getlist('trigger', [])
 
-    task_to_trigger = request.GET.getlist('trigger', [])
-    if 'linkage_error_check' in task_to_trigger:
-        operations.append(update_linkage_error)
-    if 'autocase_error_check' in task_to_trigger:
-        operations.append(update_autocase_error)
-    if 'manualcase_error_check' in task_to_trigger:
-        operations.append(update_manualcase_error)
-    if 'dump_all_db' in task_to_trigger:
-        operations.append(dump_all_db)
+    if cancel:
+        result = _cancel_task()
+    elif len(operations) > 0:
+        for op in operations:
+            results[op] = _schedule_task(op, async_task=async)
 
-    if len(operations) > 0:
-        if not async:
-            try:
-                for op in operations:
-                    with transaction.atomic():
-                        op()
-            except OperationalError:
-                return JsonResponse({'message': 'DB Locked'})
-            except IntegrityError:
-                return JsonResponse({'message': 'Integrity Check Failed'})
-            return JsonResponse({'message': 'done'})
-        else:
-            for op in operations:
-                op.apply_async()
-            return JsonResponse({'message': 'queued'})
-
+    return JsonResponse(results)
 
 
 def backup(request):
@@ -77,9 +127,10 @@ def backup_download(request, filename=None):
 
 
 def restore(request, filename=None):
+    clean_and_restore.apply_async((BASE_DIR + "/" + filename,))
     return JsonResponse({
         'filename': filename,
-        'message': 'Not implemented'}
+        'message': 'queued'}
     )
 
 

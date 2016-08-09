@@ -28,6 +28,7 @@ urlpatterns = [
     url(r'^bug/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.BugDetail.as_view(), name='bug_detail'),
 
     # API for get/start tasks, backup/restore
+    url(r'^control/$', control.overview, name='task_overview'),
     url(r'^control/task$', control.task, name='task_list'),
     url(r'^control/trigger$', control.trigger, name='task_trigger'),
     url(r'^control/backup$', control.backup, name='backup_list'),
