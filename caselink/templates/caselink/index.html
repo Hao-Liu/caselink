@@ -63,7 +63,7 @@
                         </div>
                         <div class="panel panel-default" id="backup_list">
                             <div class="panel-heading">Backup List
-                                <form action="control/upload" method="post" enctype="multipart/form-data" class="hidden" id="backup_upload_form">
+                                <form action="control/upload/" method="post" enctype="multipart/form-data" class="hidden" id="backup_upload_form">
                                     {% csrf_token %}
                                     <input type="file" name='file' id="backup_upload_input">
                                 </form>
@@ -163,11 +163,11 @@
                     });
                 }
 
-                $(".btn-cancel").click(function(){ ajax_with_alert('control/trigger?cancel=true'); });
-                $(".btn-auto-error").click(function(){ ajax_with_alert('control/trigger?async=true&trigger=autocase_error_check'); });
-                $(".btn-manual-error").click(function(){ ajax_with_alert('control/trigger?async=true&trigger=manualcase_error_check'); });
-                $(".btn-linkage-error").click(function(){ ajax_with_alert('control/trigger?async=true&trigger=linkage_error_check'); });
-                $(".backup-new").click(function(){ ajax_with_alert('control/trigger?async=true&trigger=dump_all_db'); });
+                $(".btn-cancel").click(function(){ ajax_with_alert('control/trigger/?cancel=true'); });
+                $(".btn-auto-error").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=autocase_error_check'); });
+                $(".btn-manual-error").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=manualcase_error_check'); });
+                $(".btn-linkage-error").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=linkage_error_check'); });
+                $(".backup-new").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=dump_all_db'); });
                 $(".backup-upload").click(function(){
                     $('#backup_upload_input').click();
                 });
@@ -191,7 +191,7 @@
 
                 function poll_status(){
                     $.ajax({
-                        'url':'control',
+                        'url':'control/',
                         'cache': false
                     })
                     .done(function(data){

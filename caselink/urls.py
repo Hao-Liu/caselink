@@ -29,10 +29,10 @@ urlpatterns = [
 
     # API for get/start tasks, backup/restore
     url(r'^control/$', control.overview, name='task_overview'),
-    url(r'^control/task$', control.task, name='task_list'),
-    url(r'^control/trigger$', control.trigger, name='task_trigger'),
-    url(r'^control/backup$', control.backup, name='backup_list'),
+    url(r'^control/task/$', control.task, name='task_list'),
+    url(r'^control/trigger/$', control.trigger, name='task_trigger'),
+    url(r'^control/backup/$', control.backup, name='backup_list'),
     url(r'^control/backup/(?P<filename>.+\.yaml)$', control.backup_instance, name='backup_download'),
     url(r'^control/restore/(?P<filename>.+\.yaml)$', control.restore, name='restore'),
-    url(r'^control/upload$', control.upload, name='upload'),
+    url(r'^control/upload/$', control.upload, name='upload'),
 ]
