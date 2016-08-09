@@ -134,14 +134,14 @@
                     });
                 }
 
-                $(".btn-cancel").click(function(){ op_trigger('control?cancel=true'); });
-                $(".btn-auto-error").click(function(){ op_trigger('control?async=true&trigger=autocase_error_check'); });
-                $(".btn-manual-error").click(function(){ op_trigger('control?async=true&trigger=manualcase_error_check'); });
-                $(".btn-linkage-error").click(function(){ op_trigger('control?async=true&trigger=linkage_error_check'); });
+                $(".btn-cancel").click(function(){ op_trigger('control/task?cancel=true'); });
+                $(".btn-auto-error").click(function(){ op_trigger('control/trigger?async=true&trigger=autocase_error_check'); });
+                $(".btn-manual-error").click(function(){ op_trigger('control/trigger?async=true&trigger=manualcase_error_check'); });
+                $(".btn-linkage-error").click(function(){ op_trigger('control/trigger?async=true&trigger=linkage_error_check'); });
 
                 function poll_tasks(){
                     $.ajax({
-                        'url':'control',
+                        'url':'control/task',
                         'cache': false
                     })
                     .done(function(data){

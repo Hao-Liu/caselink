@@ -27,6 +27,9 @@ except ImportError:
 from caselink.models import *
 
 
+BASE_DIR = 'caselink/backups'
+
+
 @transaction.atomic
 def load_error():
     """Load baseline Error"""
@@ -303,7 +306,9 @@ def _load_bug(failures):
 
 
 @shared_task
-def dump_all_db(filename):
+def dump_all_db(filename=None):
+    if not filename:
+        filename=BASE_DIR + "/" + str(datetime.datetime.now().isoformat()) + ".yaml"
     with open(filename, 'w+') as base_fp:
         for Model in [Error, Framework, Project, Document, #Meta models
                       WorkItem, AutoCase, CaseLink, Bug, AutoCaseFailure]:
