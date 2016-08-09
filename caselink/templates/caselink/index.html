@@ -221,7 +221,10 @@
                         }
                         else{
                             for(var i = 0, len = data.backup.length; i < len; i++){
-                                backup_list.append(backup_item.clone().prepend(data.backup[i]));
+                                item = backup_item.clone()
+                                item.prepend("<span class=\"label label-default\">"+ (parseInt(data.backup[i].size)/(1024*1024)).toFixed(1) +"MB</span>");
+                                item.prepend(data.backup[i].file);
+                                backup_list.append(item);
                             }
                         }
                     });

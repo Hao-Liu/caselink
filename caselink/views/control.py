@@ -82,9 +82,13 @@ def _schedule_task(task_name, async_task=True):
 
 def _get_backup_list():
     backup_list = []
-    for file in os.listdir('caselink/backups'):
+    for file in os.listdir(BASE_DIR):
         if file.endswith(".yaml"):
-            backup_list.append(file)
+            size = os.path.getsize(BASE_DIR + "/" + file)
+            backup_list.append({
+                'file': file,
+                'size': size,
+            })
     return backup_list
 
 
