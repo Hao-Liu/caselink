@@ -345,6 +345,8 @@ def clean_all_db():
 def clean_and_restore(filename):
     clean_all_db()
     restore_all_db(filename)
+    init_linkage()
+    init_error_checking()
 
 
 def _save_db(filename, Model):
