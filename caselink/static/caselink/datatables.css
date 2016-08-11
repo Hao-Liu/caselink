@@ -9,13 +9,14 @@ table.dataTable {
     vertical-align: middle;
 }
 
-td.details-control {
-    background: url('details_open.png') no-repeat center center;
-    cursor: pointer;
+table.dataTable tbody td.no-padding {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-tr.shown td.details-control {
-    background: url('details_close.png') no-repeat center center;
+div.slider {
+    padding-top: 15px;
+    display: none;
 }
 
 .dataTables_length,

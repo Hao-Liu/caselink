@@ -8,7 +8,6 @@
     <!-- Table -->
     <table id="sortable-table" class="table table-striped table-hover">
         <thead>
-            <th></th>
             <th>Polarion</th>
             <th>Title</th>
             <th>Documents</th>
@@ -18,7 +17,6 @@
             <th>Patterns</th>
         </thead>
         <tfoot>
-            <th></th>
             <th>Polarion</th>
             <th>Title</th>
             <th>Documents</th>
@@ -30,38 +28,31 @@
     </table>
 </div>
 
+<div id="_proto_detail_panel" class="hidden">
+    <table class="table table-hover table-condensed">
+        <tbody>
+            <tr>
+                <td> Autotest Cases: </td>
+                <td class="detail-autocase"></td>
+            </tr>
+            <tr>
+                <td> Errors: </td>
+                <td class="detail-error"></td>
+            </tr>
+            <tr>
+                <td> Patterns: </td>
+                <td class="detail-pattern"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</div>
 <script type="text/javascript">
     $(document).ready(function() {
-        function format ( row ) {
-            d = row.data();
-            // `d` is the original data object for the row
-            var table_txt = '<table cellpadding="0" cellspacing="0" '+
-                'border="0" style="padding-left:0px;">';
-                if(d.cases.length > 0) {
-                    table_txt += '<tr>'+
-                    '<tr>'+
-                    '<td>Autotest cases:</td>'+
-                    '<td>'+d.cases.join("<br>")+'</td>'+
-                    '</tr>';
-                }
-                if(d.errors.length > 0) {
-                    table_txt += '<tr>'+
-                    '<td>Errors:</td>'+
-                    '<td>'+d.errors.join("<br>")+'</td>'+
-                    '</tr>';
-                }
-                if(d.patterns.length > 0) {
-                    table_txt += '<tr>'+
-                    '<td>Patterns:</td>'+
-                    '<td>'+d.patterns.join("<br>")+'</td>'+
-                    '</tr>';
-                }
-
-                table_txt += '</table>';
-                return table_txt;
-        }
-
+        var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
         var table = $('#sortable-table').DataSearchTable({
+            BaseTable: [DataTableWithChildRow,],
             "ajax": "data",
             "iDisplayLength": 20,
             "bAutoWidth": false,
@@ -81,13 +72,6 @@
                 },
             ],
             "columns": [
-                {
-                    "data":           null,
-                    "className":      'details-control',
-                    "orderable":      false,
-                    "defaultContent": '',
-                    "width":          '10',
-                },
                 {
                     "data": "polarion",
                     "render": function( data ) {
@@ -123,27 +107,43 @@
                 if(data.errors.length > 0){
                     $('td', row).eq(0).addClass('errors');
                 }
-            }
-        });
+            },
 
-        // Add event listener for opening and closing details
-        $('#sortable-table tbody').on('click', 'td.details-control', function(){
-            var tr = $(this).closest('tr');
-            var row = table.row(tr);
+            // Add event listener for opening and closing details
+            childContent: function(row, child, slideDown, slideUp){
+                var head = child_detail.clone()
+                var d = row.data();
 
-            if (row.child.isShown()) {
-                // This row is already open - close it
-                row.child.hide();
-                tr.removeClass('shown');
-            }
-            else {
-                // Open this row
-                row.child(format(row)).show();
-                tr.addClass('shown');
-                $('pre code').each(function(i, block) {
-                    hljs.highlightBlock(block);
-                });
-            }
+                if(d.cases.length > 0){
+                    head.find(".detail-autocase").html(d.cases.join("<br>"))
+                }
+                else{
+                    head.find(".detail-autocase").closest("tr").remove()
+                }
+
+                if(d.errors.length > 0){
+                    head.find(".detail-error").html(d.errors.join("<br>"))
+                }
+                else{
+                    head.find(".detail-error").closest("tr").remove()
+                }
+
+                if(d.patterns.length > 0){
+                    console.log(d.patterns.join("<br>"))
+                    head.find(".detail-pattern").html(d.patterns.join("<br>"))
+                }
+                else{
+                    head.find(".detail-pattern").closest("tr").remove()
+                }
+
+                if (d.patterns.length + d.errors.length + d.cases.length === 0) {
+                    head.empty().append('<div class="alert alert-info" role="alert">Nothing to show.</div>');
+                    setTimeout(slideUp, 800);
+                }
+
+                child.append(head.html());
+                slideDown();
+            },
         });
     });
 </script>

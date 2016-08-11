@@ -120,13 +120,20 @@ function DataTableWithChildRow(param){
             var button = $(this).find('i');
             var row = table.row(tr);
 
-            if (row.child.isShown()) {
-                // This row is already open - close it
+            function slideDown(){
+                $('div.slider', row.child()).slideDown();
+            }
+
+            function slideUp(){
                 $('div.slider', row.child()).slideUp(function(){
                     row.child.hide();
                     button.addClass('fa-plus');
                     button.removeClass('fa-minus');
                 });
+            }
+
+            if (row.child.isShown()) {
+                slideUp();
             }
             else {
                 // Open this row
@@ -135,9 +142,7 @@ function DataTableWithChildRow(param){
                 button.addClass('fa-minus');
 
                 //Load Detail
-                param.childContent(row, $(row.child()).find(".child-content"), function(){
-                    $('div.slider', row.child()).slideDown();
-                });
+                param.childContent(row, $(row.child()).find(".child-content"), slideDown, slideUp);
             }
         });
         if(initCompleteNext)
