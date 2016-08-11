@@ -6,6 +6,7 @@ from django.template import RequestContext, loader
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
+from django.db import connection
 
 from caselink.models import *
 from caselink.serializers import *
@@ -44,39 +45,47 @@ def data(request):
     json_list = []
 
     if request_type == 'a2m':
-        for auto_case in AutoCase.objects.all():
-            workitems = []
-            for caselink in auto_case.caselinks.all():
-                workitems.append(caselink.workitem)
+        cursor = connection.cursor()
 
-            json_case = {
-                "errors": [],
-                "polarion": [],
-                "title": [],
-                "automation": [],
-                "project": [],
-                "documents": [],
-                "commit": [],
-                "type": [],
-                "id": [],
-                "archs": []
-            }
+        def dictfetchall(cursor):
+            "Return all rows from a cursor as a dict"
+            columns = [col[0] for col in cursor.description]
+            return [
+                dict(zip(columns, row))
+                for row in cursor.fetchall()
+            ]
 
-            for workitem in workitems:
-                item_case = workitem_to_json(workitem)
-                if item_case is None:
-                    continue
-                for key in item_case:
-                    if key == 'errors':
-                        continue
-                    try:
-                        json_case[key].append(item_case[key])
-                    except KeyError:
-                        json_case[key] = [item_case[key]];
+        cursor.execute(
+            """
+            select
+            caselink_autocase.id AS "case",
+            caselink_caselink.title as "title",
+            caselink_caselink.workitem_id as "polarion",
+            caselink_error.message as "errors",
+            caselink_workitem_documents.document_id as "documents"
+            from
+            (((((
+            caselink_autocase
+            left join caselink_caselink_autocases on caselink_autocase.id = caselink_caselink_autocases.autocase_id)
+            left join caselink_caselink on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
+            left join caselink_autocase_errors on caselink_autocase.id = caselink_autocase_errors.autocase_id)
+            left join caselink_error on caselink_error.id = caselink_autocase_errors.error_id)
+            left join caselink_workitem_documents on caselink_workitem_documents.workitem_id = caselink_caselink.workitem_id)
+            order by "case";
+            """
+        )
 
-            json_case['case'] = auto_case.id
-            json_case['errors'].append([err.message for err in auto_case.errors.all()])
-            json_list.append(json_case)
+        def add_or_update(entry):
+            autocase_id = entry['case']
+            if len(json_list) != 0 and json_list[-1]['case'] == autocase_id:
+                pass
+            else:
+                json_list.append({'case': autocase_id})
+            for key in ['title', 'polarion', 'errors', 'documents']:
+                json_list[-1].setdefault(key, []).append(entry[key])
+
+        for autocase in dictfetchall(cursor):
+            add_or_update(autocase)
 
     elif request_type == 'm2a':
         for workitem in WorkItem.objects.all():
