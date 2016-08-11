@@ -72,7 +72,8 @@ def data(request):
                     'documents': [],
                 })
             for key in ['title', 'polarion', ]:
-                json_list[-1].get(key).append(autocase[key])
+                if autocase[key]:
+                    json_list[-1].get(key).append(autocase[key])
 
         cursor.execute(
             """
@@ -134,7 +135,7 @@ def data(request):
             left join caselink_caselink_errors on caselink_caselink_errors.caselink_id = caselink_caselink.id)
             left join caselink_error on caselink_error.id = caselink_caselink_errors.error_id)
             left join caselink_caselink_autocases on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
-            where caselink_workitem.type != "heading"
+            where caselink_workitem.type <> 'heading'
             order by "polarion";
             """
         )
@@ -155,7 +156,7 @@ def data(request):
                     'documents': [],
                 })
             for key in ['cases', 'patterns', 'errors']:
-                if workitem[key] not in json_list[-1].get(key):
+                if workitem[key] and workitem[key] not in json_list[-1].get(key):
                     json_list[-1].get(key).append(workitem[key])
 
         cursor.execute(
@@ -168,7 +169,7 @@ def data(request):
             caselink_workitem
             inner join caselink_workitem_errors on caselink_workitem.id = caselink_workitem_errors.workitem_id)
             left join caselink_error on caselink_error.id = caselink_workitem_errors.error_id)
-            where caselink_workitem.type != "heading"
+            where caselink_workitem.type <> 'heading'
             order by "polarion";
             """
         )
@@ -188,7 +189,7 @@ def data(request):
             (
             caselink_workitem
             inner join caselink_workitem_documents on caselink_workitem.id = caselink_workitem_documents.workitem_id)
-            where caselink_workitem.type != "heading"
+            where caselink_workitem.type <> 'heading'
             order by "polarion";
             """
         )
