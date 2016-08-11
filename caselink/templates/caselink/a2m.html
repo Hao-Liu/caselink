@@ -1,23 +1,27 @@
 {% extends "caselink/index.html" %}
- {% block title %} Libvirt Auto-Manual Case Linkage {% endblock %}
- {% block content %}
- <h3 align='center'>libvirt Auto-Manual Case Linkage</h3>
-<table id="sortable-table" class="display">
-    <thead>
-        <th>Case</th>
-        <th>Polarion</th>
-        <th>Title</th>
-        <th>Documents</th>
-        <th>Errors</th>
-    </thead>
-    <tfoot>
-        <th>Case</th>
-        <th>Polarion</th>
-        <th>Title</th>
-        <th>Documents</th>
-        <th>Errors</th>
-    </tfoot>
-</table>
+{% block title %} Libvirt Auto-Manual Case Linkage {% endblock %}
+{% block content %}
+<div class="panel panel-default">
+    <!-- Default panel contents -->
+    <div class=""><h3 align='center'>Auto To Manual Linkage Table</h3> </div>
+    <!-- Table -->
+    <table id="sortable-table" class="table table-striped table-hover">
+        <thead>
+            <th>Case</th>
+            <th>Polarion</th>
+            <th>Title</th>
+            <th>Documents</th>
+            <th>Errors</th>
+        </thead>
+        <tfoot>
+            <th>Case</th>
+            <th>Polarion</th>
+            <th>Title</th>
+            <th>Documents</th>
+            <th>Errors</th>
+        </tfoot>
+    </table>
+</div>
 <script type="text/javascript">
     $(document).ready(function() {
         var table = $('#sortable-table').DataSearchTable( {

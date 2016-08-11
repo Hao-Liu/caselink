@@ -1,29 +1,34 @@
 {% extends "caselink/index.html" %}
 {% block title %} Libvirt Manual-Auto Case Linkage {% endblock %}
 {% block content %}
-<h3 align='center'>libvirt Manual-Auto Case Linkage</h3>
-<table id="sortable-table" class="display">
-    <thead>
-        <th></th>
-        <th>Polarion</th>
-        <th>Title</th>
-        <th>Documents</th>
-        <th>Automation</th>
-        <th>Errors</th>
-        <th>Cases</th>
-        <th>Patterns</th>
-    </thead>
-    <tfoot>
-        <th></th>
-        <th>Polarion</th>
-        <th>Title</th>
-        <th>Documents</th>
-        <th>Automation</th>
-        <th>Errors</th>
-        <th>Cases</th>
-        <th>Patterns</th>
-    </tfoot>
-</table>
+
+<div class="panel panel-default">
+    <!-- Default panel contents -->
+    <div class=""> <h3 align='center'>Manual to Auto Linkage Table</h3> </div>
+    <!-- Table -->
+    <table id="sortable-table" class="table table-striped table-hover">
+        <thead>
+            <th></th>
+            <th>Polarion</th>
+            <th>Title</th>
+            <th>Documents</th>
+            <th>Automation</th>
+            <th>Errors</th>
+            <th>Cases</th>
+            <th>Patterns</th>
+        </thead>
+        <tfoot>
+            <th></th>
+            <th>Polarion</th>
+            <th>Title</th>
+            <th>Documents</th>
+            <th>Automation</th>
+            <th>Errors</th>
+            <th>Cases</th>
+            <th>Patterns</th>
+        </tfoot>
+    </table>
+</div>
 
 <script type="text/javascript">
     $(document).ready(function() {
