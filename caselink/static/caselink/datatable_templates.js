@@ -33,8 +33,14 @@ function DataSearchTable(param){
                 .appendTo($(column.footer()).empty())
                 .on('change', function () {
                     var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                    if(selectorColumns[title].strict){
+                        var reg = val ? "^" + val + "$" : '^$';
+                    }
+                    else{
+                        var reg = val ? val : '';
+                    }
                     column
-                    .search( val ? val : '', true, false )
+                    .search(reg , true, false )
                     .draw();
                 });
                 column.data().each(function(d, j){
