@@ -47,17 +47,22 @@
                         return link;
                     }
                 },
-                { "data": "title" },
+                {
+                    "data": "title",
+                    "render": function(data){
+                        return prettier(data.join('<br>'));
+                    }
+                },
                 {
                     "data": "documents",
                     "render": function(data){
-                        return prettier($.map(data, function(n){return n}).join('<br>'));
+                        return prettier(data.join('<br>'));
                     }
                 },
                 {
                     "data": "errors",
                     "render": function(data){
-                        return prettier($.map(data, function(n){return n}).join('<br>'));
+                        return prettier(data.join('<br>'));
                     }
                 },
             ],
