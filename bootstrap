@@ -38,7 +38,7 @@ function setup_server()
 function start_server()
 {
     # Start celery worker
-    sudo -u nobody celery worker -A libvirt_dashboard -l info -f celery_worker.log --purge --detach
+    sudo -u nobody celery worker -A libvirt_dashboard -n localhost -l info -f celery_worker.log --purge --detach
 
     # Run server
     sudo -u nobody python2 ./manage.py runserver 0.0.0.0:8888

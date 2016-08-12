@@ -15,18 +15,18 @@ from celery.result import AsyncResult
 BASE_DIR = 'caselink/backups'
 
 def _get_tasks():
-    workers = inspect()
-    if workers.active() is None:
+    workers = inspect(['celery@localhost']).active()
+    if workers is None:
         return None
-    return workers.active().items()
+    return workers.items()
 
 
 def _get_tasks_status():
     task_status = {}
-    tasks = _get_tasks()
-    if not tasks:
+    _tasks = _get_tasks()
+    if not _tasks:
         return {}
-    for worker, tasks in _get_tasks():
+    for worker, tasks in _tasks:
         for task in tasks:
             res = AsyncResult(task['id'])
             task_status[task['name']] = {
