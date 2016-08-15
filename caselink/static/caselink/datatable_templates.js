@@ -45,16 +45,29 @@ function DataSearchTable(param){
                 });
                 column.data().each(function(d, j){
                     if($.isArray(d)){
-                        selections = selections.concat(render($.map(d, function(n){return n})));
+                        if(d.length == 0){
+                            var new_select = render(d);
+                            if(selections.indexOf(new_select) == -1){
+                                selections.push(new_select);
+                            }
+                        }
+                        for (var i = 0, len = d.length; i < len; i++) {
+                            var new_select = render(d[i]);
+                            if(selections.indexOf(new_select) == -1){
+                                selections.push(new_select);
+                            };
+                        }
                     }
                     else{
-                        selections = selections.concat(render(d));
+                        var new_select = render(d);
+                        if(selections.indexOf(new_select) == -1){
+                            selections.push(new_select);
+                        };
                     }
                 });
+                selections.sort();
                 $.each(
-                    $.grep(selections, function(el, index) {
-                        return index === $.inArray(el, selections);
-                    }),
+                    selections,
                     function(key, value){
                         select.append('<option value="'+value+'">'+value+'</option>');
                     }
