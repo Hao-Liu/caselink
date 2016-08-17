@@ -51,6 +51,7 @@
             <th>Errors</th>
             <th>Cases</th>
             <th>Patterns</th>
+            <th>Maitai ID</th>
         </thead>
         <tfoot>
             <th>Polarion</th>
@@ -60,6 +61,7 @@
             <th>Errors</th>
             <th>Cases</th>
             <th>Patterns</th>
+            <th>Maitai ID</th>
         </tfoot>
     </table>
 </div>
@@ -78,6 +80,10 @@
             <tr>
                 <td> Patterns: </td>
                 <td class="detail-pattern"></td>
+            </tr>
+            <tr>
+                <td> Maitai ID: </td>
+                <td class="detail-maitai"></td>
             </tr>
         </tbody>
     </table>
@@ -117,6 +123,42 @@
                         })
                     }
                 },
+                {
+                    text: 'Create Automated Request',
+                    action: function ( e, dt, node, config ) {
+                        var filterSet = table.$('tr', {selected:true});
+                        filterSet.each(function(){
+                            var row = table.row(this)
+                            var d = row.data();
+                            var linkage_list = linkage_modal.find('#linkage_list').empty()
+                            if(!d.need_automation){
+                                $.get("/caselink/control/maitai_request/" + d.polarion).done(function(data){
+                                    $.get("/caselink/manual/" + d.polarion + "/").done(function(data){
+                                        table.row(row).data(data).draw(false);
+                                    });
+                                    alert("Maitai create, ID: " + data.id);
+                                }).fail(function(jqXHR, textStauts){
+                                    try{
+                                        var data = JSON.stringify(jqXHR.responseText)
+                                        if(data.message){
+                                            alert('Ajax failure: ' + data.message);
+                                        }
+                                        else{
+                                            alert('Ajax failure: ' + jqXHR.responseText);
+                                        }
+                                    }
+                                    catch (e){
+                                        alert('Unknown failure, detail: ' + jqXHR.responseText);
+                                    }
+                                });
+                            }
+                            else{
+                                alert('Maitai pending.');
+                            }
+                        })
+                    }
+                },
+
             ],
             initComplete: function(){
                 var wi_select = $('#linkage_manualcase');
@@ -183,6 +225,16 @@
                     "visible": false,
                     "render": prettier,
                 },
+                {
+                    "data": "maitai_id",
+                    "render": prettier,
+                },
+                {
+                    "data": "need_automation",
+                    "visible": false,
+                    "render": prettier,
+                },
+
             ],
             "createdRow": function(row, data, index){
                 if(data.errors.length > 0){
@@ -210,14 +262,20 @@
                 }
 
                 if(d.patterns.length > 0){
-                    console.log(d.patterns.join("<br>"))
                     head.find(".detail-pattern").html(d.patterns.join("<br>"))
                 }
                 else{
                     head.find(".detail-pattern").closest("tr").remove()
                 }
 
-                if (d.patterns.length + d.errors.length + d.cases.length === 0) {
+                if(d.maitai_id){
+                    head.find(".detail-maitai").html(d.maitai_id)
+                }
+                else{
+                    head.find(".detail-maitai").closest("tr").remove()
+                }
+
+                if (d.patterns.length + d.errors.length + d.cases.length === 0 && !d.maitai_id) {
                     head.empty().append('<div class="alert alert-info" role="alert">Nothing to show.</div>');
                     setTimeout(slideUp, 800);
                 }

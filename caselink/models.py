@@ -82,6 +82,8 @@ class WorkItem(models.Model):
     archs = models.ManyToManyField(Arch, blank=True, related_name='workitems')
     documents = models.ManyToManyField(Document, blank=True, related_name='workitems')
     errors = models.ManyToManyField(Error, blank=True, related_name='workitems')
+    need_automation = models.BooleanField(default=False)
+    maitai_id = models.CharField(max_length=65535, blank=True)
 
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)

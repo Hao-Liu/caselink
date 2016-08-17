@@ -1,9 +1,12 @@
 import os
+import requests
+from django.conf import settings
 
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.http import Http404
 from django.db import IntegrityError, OperationalError, transaction
 from django.shortcuts import render_to_response
+from django.shortcuts import get_object_or_404
 from django import forms
 
 from caselink.models import *
@@ -11,6 +14,8 @@ from caselink.tasks import *
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
+
+import xml.etree.ElementTree as ET
 
 BASE_DIR = 'caselink/backups'
 
@@ -162,3 +167,40 @@ def upload(request):
         return render_to_response('caselink/popup.html', {'message': 'Upload successful'})
     else:
         return HttpResponseBadRequest()
+
+
+def create_maitai_request(request, workitem_id=None):
+    print settings.CASELINK_MAITAI
+    if not settings.CASELINK_MAITAI['ENABLE']:
+        reason = (
+            settings.CASELINK_MAITAI['REASON'] or 'Maitai disabled, please contact the admin.')
+        return JsonResponse({'message': reason}, status = 400);
+
+    maitai_pass = settings.CASELINK_MAITAI['PASSWORD']
+    maitai_user = settings.CASELINK_MAITAI['USER']
+    maitai_url = settings.CASELINK_MAITAI['URL']
+
+    wi = get_object_or_404(WorkItem, pk=workitem_id)
+
+    #TODO: remove verify=False
+    res = requests.post(maitai_url, json={}, auth=(maitai_user, maitai_pass), verify=False)
+
+    if res.status_code != 200:
+        return JsonResponse({'message': 'Maitai server internal error.'}, status = 500);
+
+    root = ET.fromstring(res.content)
+
+    process = root.find('process-id').text
+    state = root.find('state').text
+    id = root.find('id').text
+    parentProcessInstanceId = root.find('parentProcessInstanceId').text
+    status = root.find('status').text
+
+    if status != 'SUCCESS':
+        return JsonResponse({'message': 'Maitai server returns error.'}, status = 500);
+
+    wi.maitai_id = id
+    wi.need_automation = True
+    wi.save()
+
+    return JsonResponse({'message': 'Success', 'id': id});

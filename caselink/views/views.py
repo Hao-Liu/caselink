@@ -125,6 +125,8 @@ def data(request):
             caselink_workitem.id AS "polarion",
             caselink_workitem.title AS "title",
             caselink_workitem.automation AS "automation",
+            caselink_workitem.need_automation AS "need_automation",
+            caselink_workitem.maitai_id AS "maitai_id",
             caselink_caselink_autocases.autocase_id as "cases",
             caselink_caselink.autocase_pattern as "patterns",
             caselink_error.message as "errors"
@@ -149,6 +151,8 @@ def data(request):
                     'polarion': w_id,
                     'title': workitem['title'],
                     'automation': workitem['automation'],
+                    'need_automation': workitem['need_automation'],
+                    'maitai_id': workitem['maitai_id'],
                     'patterns': [],
                     'cases': [],
 

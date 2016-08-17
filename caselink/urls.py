@@ -38,4 +38,5 @@ urlpatterns = [
     url(r'^control/backup/(?P<filename>.+\.yaml)$', control.backup_instance, name='backup_download'),
     url(r'^control/restore/(?P<filename>.+\.yaml)$', control.restore, name='restore'),
     url(r'^control/upload/$', control.upload, name='upload'),
+    url(r'^control/maitai_request/(?P<workitem_id>.+)$', control.create_maitai_request, name='maitai'),
 ]

@@ -133,6 +133,17 @@ REST_FRAMEWORK = {
         'PAGE_SIZE': 100,
 }
 
+CASELINK = {
+}
+
+CASELINK_MAITAI = {
+    'ENABLE': False,
+    'REASON': 'Maitai haven\'t implemented the workflow we needed yet.',
+    'USER': '',
+    'PASSWORD': '',
+    'URL': '',
+}
+
 try:
     from libvirt_dashboard.settings_instance import *
 except ImportError:
