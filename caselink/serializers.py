@@ -37,3 +37,8 @@ class BugSerializer(serializers.ModelSerializer):
 class AutoCaseFailureSerializer(serializers.ModelSerializer):
     class Meta:
         model = AutoCaseFailure
+
+
+class FrameworkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Framework

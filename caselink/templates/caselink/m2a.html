@@ -2,6 +2,42 @@
 {% block title %} Libvirt Manual-Auto Case Linkage {% endblock %}
 {% block content %}
 
+<div class="modal fade" tabindex="-1" role="dialog" id="linkage_modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Edit Linkage - </h4>
+            </div>
+            <div class="modal-body">
+                <label for="linkage_manualcase">WorkItem</label>
+                <select text="text" name="workitem" class="form-control" id="linkage_manualcase"> </select>
+                <div id="linkage_list">
+                    <div id="linkage_list_item" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
+                        <h5>Linkage Item</h5>
+                        <button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+
+                        <label for="linkage_title">Title</label>
+                        <input type="text" name="title" class="form-control" id="linkage_title" placeholder="Linkage Title" >
+
+                        <label for="linkage_framework">Framework</label>
+                        <select type="text" name="framework" class="form-control" id="linkage_framework"> <option value=""></option> </select>
+
+                        <label for="linkage_pattern">Pattern</label>
+                        <input type="text" name="autocase_pattern" class="form-control" id="linkage_pattern" placeholder="Pattern to match autotest cases. eg. 'virsh.domtime..set_time'" >
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success">Add new linkage</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 <div class="panel panel-default">
     <!-- Default panel contents -->
     <div class=""> <h3 align='center'>Manual to Auto Linkage Table</h3> </div>
@@ -51,8 +87,53 @@
 <script type="text/javascript">
     $(document).ready(function() {
         var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
+        var linkage_modal = $('#linkage_modal');
+        var linkage_list_item = $('#linkage_list_item').detach();
         var table = $('#sortable-table').DataSearchTable({
-            BaseTable: [DataTableWithChildRow,],
+            select: {
+                style: 'single'
+            },
+            BaseTable: [DataTableWithChildRow, DataTableWithInlineButton,],
+            buttons: [
+                {
+                    text: 'Edit Linkage',
+                    action: function ( e, dt, node, config ) {
+                        var filterSet = table.$('tr', {selected:true});
+                        filterSet.each(function(){
+                            var d = table.row(this).data();
+                            var linkage_list = linkage_modal.find('#linkage_list').empty()
+                            $.get("/caselink/manual/" + d.polarion + "/link/").done(function(data){
+                                $.each(data, function(idx, ele){
+                                    var new_item = linkage_list_item.clone();
+                                    new_item.data("caselink_id", ele.id);
+                                    new_item.find("#linkage_pattern").val(ele.autocase_pattern);
+                                    new_item.find("#linkage_framework").val(ele.framework);
+                                    new_item.find("#linkage_title").val(ele.title);
+                                    linkage_list.append(new_item);
+                                });
+                            });
+                            linkage_modal.find('#linkage_manualcase').val(d.polarion).prop('disabled', true);
+                            linkage_modal.modal('show');
+                        })
+                    }
+                },
+            ],
+            initComplete: function(){
+                var wi_select = $('#linkage_manualcase');
+                table.column(function(idx, data, node){
+                    return $(node).text() == 'Polarion';
+                }).data().each(function(d, j){
+                    wi_select.append('<option value="' + d + '">' + d + '</option>');
+                });
+
+                var fr_select = linkage_list_item.find('#linkage_framework');
+                $.get("/caselink/framework/").done(function(d){
+                    d = d.results;
+                    $.each(d, function(idx, d){
+                        fr_select.append('<option value="' + d.name + '">' + d.name + '</option>');
+                    });
+                });
+            },
             "ajax": "data",
             "iDisplayLength": 20,
             "bAutoWidth": false,

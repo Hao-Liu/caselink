@@ -225,3 +225,13 @@ class AutoCaseLinkageList(APIView):
         caselinks = self.get_objects(autocase)
         serializers = [LinkageSerializer(caselink) for caselink in caselinks]
         return Response(serializer.data for serializer in serializers)
+
+
+# RESTful APIs for meta class
+class FrameworkList(generics.ListCreateAPIView):
+    queryset = Framework.objects.all()
+    serializer_class = FrameworkSerializer
+
+class FrameworkDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Framework.objects.all()
+    serializer_class = FrameworkSerializer
