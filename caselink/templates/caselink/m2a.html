@@ -26,6 +26,11 @@
                         <label for="linkage_pattern">Pattern</label>
                         <input type="text" name="autocase_pattern" class="form-control" id="linkage_pattern" placeholder="Pattern to match autotest cases. eg. 'virsh.domtime..set_time'" >
 
+                        <label for="linkage_pattern">Linked Autocases</label>
+                        <div class="well" id="linkage_autocases" placeholder="Pattern to match autotest cases. eg. 'virsh.domtime..set_time'" >
+                            Empty
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -184,6 +189,7 @@
                                     new_item.find("#linkage_pattern").val(ele.autocase_pattern);
                                     new_item.find("#linkage_framework").val(ele.framework);
                                     new_item.find("#linkage_title").val(ele.title);
+                                    new_item.find("#linkage_autocases").html(ele.autocases.join("<br>"));
                                     new_item.data('linkage', ele);
                                     new_item.data('status', 'exists');
                                     linkage_list.append(new_item);
