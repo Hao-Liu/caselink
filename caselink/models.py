@@ -108,6 +108,7 @@ class WorkItem(models.Model):
 
         self.error_related.clear()
         self.errors.clear()
+        self.save()
 
         cases_duplicate = WorkItem.objects.filter(title=self.title)
         if len(cases_duplicate) > 1:
