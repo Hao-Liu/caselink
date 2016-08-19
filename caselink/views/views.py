@@ -33,6 +33,7 @@ def index(request):
 def data(request):
     #TODO: sql too redundant
     request_type = request.GET.get('type', 'm2a')
+    pk = request.GET.get('pk', None)
 
     def dictfetchall(cursor):
         "Return all rows from a cursor as a dict"
@@ -46,20 +47,19 @@ def data(request):
 
     if request_type == 'a2m':
         cursor = connection.cursor()
-        cursor.execute(
-            """
-            select
-            caselink_autocase.id AS "case",
-            caselink_caselink.title as "title",
-            caselink_caselink.workitem_id as "polarion"
-            from
-            ((
-            caselink_autocase
-            left join caselink_caselink_autocases on caselink_autocase.id = caselink_caselink_autocases.autocase_id)
-            left join caselink_caselink on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
-            order by "case";
-            """
-        )
+        sql = """
+        select
+        caselink_autocase.id AS "case",
+        caselink_caselink.title as "title",
+        caselink_caselink.workitem_id as "polarion"
+        from
+        ((
+        caselink_autocase
+        left join caselink_caselink_autocases on caselink_autocase.id = caselink_caselink_autocases.autocase_id)
+        left join caselink_caselink on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
+        order by "case"
+        """
+        cursor.execute(sql)
 
         for autocase in dictfetchall(cursor):
             autocase_id = autocase['case']
@@ -119,28 +119,33 @@ def data(request):
     elif request_type == 'm2a':
         #TODO: M2m is not well handled here.
         cursor = connection.cursor()
-        cursor.execute(
-            """
-            select
-            caselink_workitem.id AS "polarion",
-            caselink_workitem.title AS "title",
-            caselink_workitem.automation AS "automation",
-            caselink_workitem.need_automation AS "need_automation",
-            caselink_workitem.maitai_id AS "maitai_id",
-            caselink_caselink_autocases.autocase_id as "cases",
-            caselink_caselink.autocase_pattern as "patterns",
-            caselink_error.message as "errors"
-            from
-            ((((
-            caselink_workitem
-            left join caselink_caselink on caselink_caselink.workitem_id = caselink_workitem.id)
-            left join caselink_caselink_errors on caselink_caselink_errors.caselink_id = caselink_caselink.id)
-            left join caselink_error on caselink_error.id = caselink_caselink_errors.error_id)
-            left join caselink_caselink_autocases on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
-            where caselink_workitem.type <> 'heading'
-            order by "polarion";
-            """
-        )
+
+        sql = """
+        select
+        caselink_workitem.id AS "polarion",
+        caselink_workitem.title AS "title",
+        caselink_workitem.automation AS "automation",
+        caselink_workitem.need_automation AS "need_automation",
+        caselink_workitem.maitai_id AS "maitai_id",
+        caselink_caselink_autocases.autocase_id as "cases",
+        caselink_caselink.autocase_pattern as "patterns",
+        caselink_error.message as "errors"
+        from
+        ((((
+        caselink_workitem
+        left join caselink_caselink on caselink_caselink.workitem_id = caselink_workitem.id)
+        left join caselink_caselink_errors on caselink_caselink_errors.caselink_id = caselink_caselink.id)
+        left join caselink_error on caselink_error.id = caselink_caselink_errors.error_id)
+        left join caselink_caselink_autocases on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
+        where caselink_workitem.type <> 'heading' %s
+        order by "polarion"
+        """
+        if pk:
+            sql = sql % "and caselink_workitem.id = %s"
+            cursor.execute(sql, [pk])
+        else:
+            sql = sql % ""
+            cursor.execute(sql)
 
         for workitem in dictfetchall(cursor):
             w_id = workitem['polarion']
@@ -163,20 +168,26 @@ def data(request):
                 if workitem[key] and workitem[key] not in json_list[-1].get(key):
                     json_list[-1].get(key).append(workitem[key])
 
-        cursor.execute(
-            """
-            select
-            caselink_workitem.id AS "polarion",
-            caselink_error.message as "errors"
-            from
-            ((
-            caselink_workitem
-            inner join caselink_workitem_errors on caselink_workitem.id = caselink_workitem_errors.workitem_id)
-            left join caselink_error on caselink_error.id = caselink_workitem_errors.error_id)
-            where caselink_workitem.type <> 'heading'
-            order by "polarion";
-            """
-        )
+        sql = """
+        select
+        caselink_workitem.id AS "polarion",
+        caselink_error.message as "errors"
+        from
+        ((
+        caselink_workitem
+        inner join caselink_workitem_errors on caselink_workitem.id = caselink_workitem_errors.workitem_id)
+        left join caselink_error on caselink_error.id = caselink_workitem_errors.error_id)
+        where caselink_workitem.type <> 'heading' %s
+        order by "polarion";
+        """
+
+        if pk:
+            sql = sql % "and caselink_workitem.id = %s"
+            cursor.execute(sql, [pk])
+        else:
+            sql = sql % ""
+            cursor.execute(sql)
+
 
         pos = 0;
         for workitem in dictfetchall(cursor):
@@ -184,19 +195,24 @@ def data(request):
                 pos += 1
             json_list[pos].get('errors').append(workitem['errors'])
 
-        cursor.execute(
-            """
-            select
-            caselink_workitem.id AS "polarion",
-            caselink_workitem_documents.document_id as "documents"
-            from
-            (
-            caselink_workitem
-            inner join caselink_workitem_documents on caselink_workitem.id = caselink_workitem_documents.workitem_id)
-            where caselink_workitem.type <> 'heading'
-            order by "polarion";
-            """
-        )
+        sql = """
+        select
+        caselink_workitem.id AS "polarion",
+        caselink_workitem_documents.document_id as "documents"
+        from
+        (
+        caselink_workitem
+        inner join caselink_workitem_documents on caselink_workitem.id = caselink_workitem_documents.workitem_id)
+        where caselink_workitem.type <> 'heading' %s
+        order by "polarion";
+        """
+
+        if pk:
+            sql = sql % "and caselink_workitem.id = %s"
+            cursor.execute(sql, [pk])
+        else:
+            sql = sql % ""
+            cursor.execute(sql)
 
         pos = 0;
         for workitem in dictfetchall(cursor):
