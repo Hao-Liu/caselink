@@ -1,6 +1,6 @@
 function DataSearchTable(param){
     // Setup - First add a text input to each footer cell
-    that = this
+    var that = this
     this.find('tfoot th').each(function(){
         var title = that.find('thead th').eq($(this).index()).text();
         if(title.length > 0){
@@ -74,12 +74,13 @@ function DataSearchTable(param){
                 );
             }
             // Apply the search
-            var that = this;
-            $('input', this.footer()).on('keyup change', function(){
-                that
-                .search( this.value)
-                .draw();
-            });
+            if(column.visible()){
+                $('input', column.footer()).on('keyup change', function(){
+                    column
+                    .search(this.value)
+                    .draw();
+                });
+            }
         });
         if(initCompleteNext)
             initCompleteNext.apply(this, [setting, json]);
