@@ -1,5 +1,5 @@
 """
-WSGI config for libvirt_dashboard project.
+WSGI config for caselink project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "libvirt_dashboard.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "caselink.settings")
 
 application = get_wsgi_application()

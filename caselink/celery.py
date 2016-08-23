@@ -4,14 +4,14 @@ import os
 
 from celery import Celery
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'libvirt_dashboard.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'caselink.settings')
 
 import django
 from django.conf import settings
 
 django.setup()
 
-app = Celery('libvirt_dashboard')
+app = Celery('caselink')
 
 app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)

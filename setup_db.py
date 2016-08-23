@@ -5,7 +5,7 @@ import sys
 import django
 
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'libvirt_dashboard.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'caselink.settings')
 
 django.setup()
 
