@@ -15,8 +15,6 @@ function clean_server()
 
     sleep 1
 
-    pkill -f celery
-    sudo systemctl restart rabbitmq-server
     rm -rf caselink/migrations celerybeat-schedule db.sqlite3
 }
 
@@ -37,6 +35,9 @@ function setup_server()
 
 function start_server()
 {
+    pkill -f celery
+    sudo systemctl restart rabbitmq-server
+
     # Start celery worker
     sudo -u nobody celery worker -A caselink -n localhost -l info -f celery_worker.log --purge --detach
 

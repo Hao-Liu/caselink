@@ -58,3 +58,4 @@ docs/_build/
 # PyBuilder
 target/
 caselink/settings_instance.py
+caselink/backups
