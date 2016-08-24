@@ -11,7 +11,7 @@ django.setup()
 
 from django.db import transaction
 
-from caselink.tasks import *
+from caselink.tasks.common import *
 
 def run():
     print('Loading Error')

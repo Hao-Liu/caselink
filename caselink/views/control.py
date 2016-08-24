@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django import forms
 
 from caselink.models import *
-from caselink.tasks import *
+from caselink.tasks.common import *
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
