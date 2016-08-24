@@ -27,3 +27,7 @@
 
 "WORKITEM_TITLE_DUPLICATE":
   message: "Duplicate name found"
+
+#TODO
+"BUG_LINKAGE_INCONSISTENCY":
+  message: "Some manual case and autotest case failing by this bug have no linkage between them."
