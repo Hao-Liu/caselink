@@ -6,7 +6,8 @@ from pylarion.enum_option_id import EnumOptionId
 from pylarion.work_item import _WorkItem
 from pylarion.wiki_page import WikiPage
 
-from caselink.models import WorkItem
+from caselink import models
+from celery import shared_task, current_task
 
 
 PROJECT = 'RedHatEnterpriseLinux7'
@@ -106,9 +107,9 @@ def sync_automation(workitem_dict, mode="poll"):
 
 
 @shared_task
-def poll_manualcase_from_polarion():
+def sync_with_polarion():
     current_polarion_workitems = load_polarion(PROJECT, MANUAL_SPACE)
-    current_caselink_workitems = WorkItem.objects.all()
+    current_caselink_workitems = models.WorkItem.objects.all()
 
     polarion_set = set(current_polarion_workitems.keys())
     caselink_set = set(current_caselink_workitems.values_list('id', flat=True))
@@ -116,27 +117,30 @@ def poll_manualcase_from_polarion():
     new_wi = polarion_set - caselink_set
     deleted_wi = caselink_set - polarion_set
 
+    print(new_wi)
+    print(deleted_wi)
+
     for wi_id in new_wi:
         wi = current_polarion_workitems[wi_id]
-        wi_object = WorkItem(
+        workitem = models.WorkItem(
             id=wi_id,
             title=wi['title'],
             type=wi['type'],
         )
 
-        wi_object.project, created = Project.objects.get_or_create(name=wi['project'])
+        workitem.project, created = models.Project.objects.get_or_create(name=wi['project'])
 
         for doc_id in wi['documents']:
-            doc, created = Document.objects.get_or_create(id=doc_id)
+            doc, created = models.Document.objects.get_or_create(id=doc_id)
             if created:
                 doc.title = doc_id
-                doc.component = Component.objects.get_or_create(name=DEFAULT_COMPONENT)
+                doc.component = models.Component.objects.get_or_create(name=DEFAULT_COMPONENT)
             doc.workitems.add(workitem)
             doc.save()
 
         if 'arch' in wi:
             for arch_name in wi['arch']:
-                arch, _ = Arch.objects.get_or_create(name=arch_name)
+                arch, _ = models.Arch.objects.get_or_create(name=arch_name)
                 arch.workitems.add(workitem)
                 arch.save()
 
@@ -145,13 +149,13 @@ def poll_manualcase_from_polarion():
 
         if 'errors' in wi:
             for error_message in wi['errors']:
-                error, created = Error.objects.get_or_create(message=error_message)
+                error, created = models.Error.objects.get_or_create(message=error_message)
                 if created:
                     error.id = error_message
                     error.workitems.add(workitem)
                     error.save()
 
-    for wi_id, wi in deleted_wi:
-        WorkItem.objects.get(id=wi_id).delete()
+    for wi_id in deleted_wi:
+        models.WorkItem.objects.get(id=wi_id).delete()
 
     return new_wi, deleted_wi

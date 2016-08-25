@@ -11,6 +11,7 @@ from django import forms
 
 from caselink.models import *
 from caselink.tasks.common import *
+from caselink.tasks.polarion import sync_with_polarion
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
@@ -59,29 +60,29 @@ def _cancel_task():
 
 
 def _schedule_task(task_name, async_task=True):
-
-    if 'linkage_error_check' == task_name:
-        operations = update_linkage_error
-    elif 'autocase_error_check' == task_name:
-        operations = update_autocase_error
-    elif 'manualcase_error_check' == task_name:
-        operations = update_manualcase_error
-    elif 'dump_all_db' == task_name:
-        operations = dump_all_db
+    tasks_map = {
+        'linkage_error_check': update_linkage_error,
+        'autocase_error_check': update_autocase_error,
+        'manualcase_error_check': update_manualcase_error,
+        'dump_all_db': dump_all_db,
+        'polarion_sync': sync_with_polarion,
+    }
+    if task_name in tasks_map:
+        task = tasks_map[task_name]
     else:
         return {'message': 'Unknown task'}
 
     if not async_task:
         try:
             with transaction.atomic():
-                operations()
+                task()
         except OperationalError:
             return {'message': 'DB Locked'}
         except IntegrityError:
             return {'message': 'Integrity Check Failed'}
         return {'message': 'done'}
     else:
-        operations.apply_async()
+        task.apply_async()
         return {'message': 'queued'}
 
 
@@ -113,13 +114,13 @@ def trigger(request):
 
     cancel = True if request.GET.get('cancel', '') == 'true' else False
     async = True if request.GET.get('async', '') == 'true' else False
-    operations = request.GET.getlist('trigger', [])
+    tasks = request.GET.getlist('trigger', [])
 
     if cancel:
         result = _cancel_task()
-    elif len(operations) > 0:
-        for op in operations:
-            results[op] = _schedule_task(op, async_task=async)
+    elif len(tasks) > 0:
+        for task in tasks:
+            results[task] = _schedule_task(task, async_task=async)
 
     return JsonResponse(results)
 
