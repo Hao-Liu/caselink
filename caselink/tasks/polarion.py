@@ -108,6 +108,9 @@ def sync_automation(workitem_dict, mode="poll"):
 
 @shared_task
 def sync_with_polarion():
+    direct_call = current_task.request.id is None
+    if not direct_call:
+        current_task.update_state(state='PROGRESS')
     current_polarion_workitems = load_polarion(PROJECT, MANUAL_SPACE)
     current_caselink_workitems = models.WorkItem.objects.all()
 
