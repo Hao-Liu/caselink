@@ -90,6 +90,7 @@
                         <button type="button" class="btn btn-info btn-op btn-auto-error">Autocase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
                         <button type="button" class="btn btn-info btn-op btn-manual-error">Manualcase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
                         <button type="button" class="btn btn-info btn-op btn-linkage-error">Linkage Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
+                        <button type="button" class="btn btn-info btn-op btn-sync-polarion">Sync with Polarion<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
                     </div>
                 </div><!-- /.modal-content -->
             </div>
@@ -171,6 +172,7 @@
                 $(".btn-auto-error").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=autocase_error_check'); });
                 $(".btn-manual-error").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=manualcase_error_check'); });
                 $(".btn-linkage-error").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=linkage_error_check'); });
+                $(".btn-sync-polarion").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=polarion_sync'); });
                 $(".backup-new").click(function(){ ajax_with_alert('control/trigger/?async=true&trigger=dump_all_db'); });
                 $(".backup-upload").click(function(){
                     $('#backup_upload_input').click();
