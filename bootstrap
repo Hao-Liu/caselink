@@ -15,15 +15,11 @@ function clean_server()
 
     sleep 1
 
-    rm -rf caselink/migrations celerybeat-schedule db.sqlite3
+    rm -rf celerybeat-schedule db.sqlite3
 }
 
 function setup_server()
 {
-    # Setup database
-    python2 ./manage.py makemigrations caselink
-    python2 ./manage.py migrate
-
     touch celery_worker.log
     chown nobody:nobody caselink/backups
     chown nobody:nobody celery_worker.log
@@ -37,6 +33,8 @@ function start_server()
 {
     pkill -f celery
     sudo systemctl restart rabbitmq-server
+
+    sudo -u nobody python2 ./manage.py migrate
 
     # Start celery worker
     sudo -u nobody celery worker -A caselink -n localhost -l info -f celery_worker.log --purge --detach

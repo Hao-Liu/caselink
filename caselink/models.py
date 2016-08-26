@@ -190,7 +190,7 @@ class AutoCase(models.Model):
 
 
 class CaseLink(models.Model):
-    workitem = models.ForeignKey(WorkItem, on_delete=models.PROTECT, related_name='caselinks')
+    workitem = models.ForeignKey(WorkItem, on_delete=models.SET_NULL, null=True, related_name='caselinks')
     autocases = models.ManyToManyField(AutoCase, blank=True, related_name='caselinks')
     autocase_pattern = models.CharField(max_length=65535)
     framework = models.ForeignKey(Framework, on_delete=models.PROTECT, null=True,
