@@ -120,9 +120,6 @@ def sync_with_polarion():
     new_wi = polarion_set - caselink_set
     deleted_wi = caselink_set - polarion_set
 
-    print(new_wi)
-    print(deleted_wi)
-
     for wi_id in new_wi:
         wi = current_polarion_workitems[wi_id]
         workitem = models.WorkItem(
@@ -158,7 +155,9 @@ def sync_with_polarion():
                     error.workitems.add(workitem)
                     error.save()
 
+        workitem.save()
+
     for wi_id in deleted_wi:
         models.WorkItem.objects.get(id=wi_id).delete()
 
-    return new_wi, deleted_wi
+    return "Created: " + ', '.join(new_wi) + "\nDeleted: " + ', '.join(deleted_wi)
