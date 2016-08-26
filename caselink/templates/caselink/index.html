@@ -83,14 +83,25 @@
                                 </li>
                             </ul>
                         </div>
-
+                        <div class="panel panel-default" id="result_list">
+                            <div class="panel-heading">Test results
+                            </div>
+                            <ul class="list-group">
+                                <li class="list-group-item empty-item">No Results</li>
+                                <li class="list-group-item result-item">
+                                    <div class="well">
+                                    </div> </li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger btn-cancel">Cancel All Tasks<i class="fa fa-fw fa-close" aria-hidden="true"></i></button>
                         <button type="button" class="btn btn-info btn-op btn-auto-error">Autocase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
                         <button type="button" class="btn btn-info btn-op btn-manual-error">Manualcase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
                         <button type="button" class="btn btn-info btn-op btn-linkage-error">Linkage Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
                         <button type="button" class="btn btn-info btn-op btn-sync-polarion">Sync with Polarion<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
+                        <br>
+                        <br>
+                        <button type="button" class="btn btn-danger btn-cancel">Cancel All Tasks<i class="fa fa-fw fa-close" aria-hidden="true"></i></button>
                     </div>
                 </div><!-- /.modal-content -->
             </div>
@@ -128,6 +139,10 @@
                 var backup_list = $("#backup_list ul.list-group");
                 var backup_item = $("#backup_list li.backup-item").detach();
                 var empty_backup = $("#backup_list li.empty-item");
+
+                var result_list = $("#result_list ul.list-group");
+                var result_item = $("#result_list li.result-item").detach();
+                var empty_backup = $("#result_list li.empty-item");
 
                 $('#task_panel').on('hidden.bs.modal', function (e) {
                     polling = false;
@@ -231,6 +246,19 @@
                                 item.prepend("<span class=\"label label-default\">"+ (parseInt(data.backup[i].size)/(1024*1024)).toFixed(1) +"MB</span>");
                                 item.prepend(data.backup[i].file);
                                 backup_list.append(item);
+                            }
+                        }
+
+                        result_list.empty();
+                        if($.isEmptyObject(data.results)) {
+                            backup_list.append(empty_task);
+                        }
+                        else{
+                            for(var i = 0, len = data.results.length; i < len; i++){
+                                item = result_item.clone()
+                                item.prepend("<h3>"+ data.results[i].task_id +"</h3>");
+                                item.find(".well").text(data.results[i].result)
+                                result_list.append(item);
                             }
                         }
                     });
