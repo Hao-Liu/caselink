@@ -15,6 +15,7 @@ from caselink.tasks.polarion import sync_with_polarion
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
+from djcelery.models import TaskMeta
 
 import xml.etree.ElementTree as ET
 
@@ -27,7 +28,16 @@ def _get_tasks():
     return workers.items()
 
 
-def _get_tasks_status():
+def _get_finished_tasks_results(number):
+    ret = []
+    task_metas = TaskMeta.objects.order_by('-date_done')[0:number-1]
+    for i in task_metas:
+        ret.append(i.to_dict())
+        ret[-1]['result'] = str(ret[-1]['result'])
+    return ret
+
+
+def _get_running_tasks_status():
     task_status = {}
     _tasks = _get_tasks()
     if not _tasks:
@@ -100,13 +110,14 @@ def _get_backup_list():
 
 def overview(request):
     return JsonResponse({
-        'task': _get_tasks_status(),
+        'task': _get_running_tasks_status(),
+        'results': _get_finished_tasks_results(7),
         'backup': _get_backup_list(),
     })
 
 
 def task(request):
-    return JsonResponse(_get_tasks_status())
+    return JsonResponse(_get_running_tasks_status())
 
 
 def trigger(request):
