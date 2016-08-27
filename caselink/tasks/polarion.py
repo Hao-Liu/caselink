@@ -1,10 +1,15 @@
 from __future__ import print_function
 
 from collections import OrderedDict
-from pylarion.document import Document
-from pylarion.enum_option_id import EnumOptionId
-from pylarion.work_item import _WorkItem
-from pylarion.wiki_page import WikiPage
+try:
+    from pylarion.document import Document
+    from pylarion.enum_option_id import EnumOptionId
+    from pylarion.work_item import _WorkItem
+    from pylarion.wiki_page import WikiPage
+    PYLARION_INSTALLED = True
+except ImportError:
+    PYLARION_INSTALLED = False
+    pass
 
 from caselink import models
 from celery import shared_task, current_task
@@ -108,6 +113,8 @@ def sync_automation(workitem_dict, mode="poll"):
 
 @shared_task
 def sync_with_polarion():
+    if not PYLARION_INSTALLED:
+        return "Pylarion not installed"
     direct_call = current_task.request.id is None
     if not direct_call:
         current_task.update_state(state='PROGRESS')
