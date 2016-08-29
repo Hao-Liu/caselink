@@ -1,4 +1,6 @@
 import logging
+import django_filters
+from rest_framework import filters
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -16,6 +18,8 @@ from caselink.serializers import *
 class WorkItemList(generics.ListCreateAPIView):
     queryset = WorkItem.objects.all()
     serializer_class = WorkItemSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ('title', 'caselinks', 'type', 'automation', 'project', 'archs', 'errors', 'bugs')
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -40,6 +44,8 @@ class WorkItemDetail(generics.RetrieveUpdateDestroyAPIView):
 class AutoCaseList(generics.ListCreateAPIView):
     queryset = AutoCase.objects.all()
     serializer_class = AutoCaseSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ('caselinks', 'failures', 'framework', 'errors', )
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -66,6 +72,7 @@ class AutoCaseDetail(generics.RetrieveUpdateDestroyAPIView):
 class LinkageList(generics.ListCreateAPIView):
     queryset = CaseLink.objects.all()
     serializer_class = LinkageSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -89,19 +96,10 @@ class LinkageDetail(generics.RetrieveUpdateDestroyAPIView):
             item.error_check(depth=0)
 
 
-class BugList(generics.ListCreateAPIView):
-    queryset = Bug.objects.all()
-    serializer_class = BugSerializer
-
-
-class BugDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Bug.objects.all()
-    serializer_class = BugSerializer
-
-
 class AutoCaseFailureList(generics.ListCreateAPIView):
     queryset = AutoCaseFailure.objects.all()
     serializer_class = AutoCaseFailureSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -128,6 +126,7 @@ class AutoCaseFailureDetail(generics.RetrieveUpdateDestroyAPIView):
 class BugList(generics.ListCreateAPIView):
     queryset = Bug.objects.all()
     serializer_class = BugSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
 
 
 class BugDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -144,6 +143,7 @@ class WorkItemLinkageList(APIView):
 
     # This serializer is only used for html view to hide workitem field
     serializer_class = WorkItemLinkageSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
 
     def get_objects(self, workitem):
         wi = get_object_or_404(WorkItem, id=workitem)
@@ -213,6 +213,7 @@ class AutoCaseLinkageList(APIView):
     """
 
     serializer_class = LinkageSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
 
     def get_objects(self, autocase):
         case = get_object_or_404(AutoCase, id=autocase)
@@ -231,6 +232,7 @@ class AutoCaseLinkageList(APIView):
 class FrameworkList(generics.ListCreateAPIView):
     queryset = Framework.objects.all()
     serializer_class = FrameworkSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
 
 class FrameworkDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Framework.objects.all()

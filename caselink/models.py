@@ -208,6 +208,9 @@ class CaseLink(models.Model):
 
     _min_dump = ('workitem', 'autocase_pattern', 'framework', 'title', )
 
+    def __str__(self):
+        return str(self.workitem) + " - " + str(self.autocase_pattern)
+
     class Meta:
         unique_together = ("workitem", "autocase_pattern",)
 
