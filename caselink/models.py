@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 
 def test_pattern_match(pattern, casename):
@@ -100,6 +101,7 @@ class WorkItem(models.Model):
             list(self.caselinks.all())
         )
 
+    @transaction.atomic
     def error_check(self, depth=1):
         if depth > 0:
             # error_related may change, so check it first
@@ -173,6 +175,7 @@ class AutoCase(models.Model):
                 link.autocases.add(self)
                 link.save()
 
+    @transaction.atomic
     def error_check(self, depth=1):
         self.errors.clear()
 
@@ -228,6 +231,7 @@ class CaseLink(models.Model):
             list(self.autocases.all())
         )
 
+    @transaction.atomic
     def error_check(self, depth=1):
         if depth > 0:
             for item in self.error_related.all():
@@ -273,6 +277,7 @@ class Bug(models.Model):
             cases += failure.autocases.all()
         return cases
 
+    @transaction.atomic
     def error_check(self, depth=1):
         # TODO
         pass
@@ -314,6 +319,7 @@ class AutoCaseFailure(models.Model):
                 self.autocases.add(case)
         self.save()
 
+    @transaction.atomic
     def error_check(self, depth=1):
         # TODO
         pass
