@@ -114,9 +114,9 @@
             var promises = [];
             var deleted = linkage_modal.data('deleted');
             for(var i = 0; i < deleted.length; i++){
-                console.log({method: 'DELETE', url:'/caselink/link/' + deleted[i].id + "/"});
+                console.log({method: 'DELETE', url:'/link/' + deleted[i].id + "/"});
                 promises.push(
-                    $.ajax({method: 'DELETE', url:'/caselink/link/' + deleted[i].id + "/"})
+                    $.ajax({method: 'DELETE', url:'/link/' + deleted[i].id + "/"})
                 );
             }
             var items = linkage_modal.find('.linkage-list-item');
@@ -129,20 +129,20 @@
                     title: ele.find("#linkage_title").val(),
                 }
                 if(ele.data('status') == 'exists'){
-                    console.log('PUT', '/caselink/link/' + ele.data('linkage').id + "/", JSON.stringify(data))
+                    console.log('PUT', '/link/' + ele.data('linkage').id + "/", JSON.stringify(data))
                     promises.push($.ajax({
                         contentType: "application/json; charset=utf-8",
                         method: 'PUT',
-                        url:'/caselink/link/' + ele.data('linkage').id + "/",
+                        url:'/link/' + ele.data('linkage').id + "/",
                         data: JSON.stringify(data),
                     }));
                 }
                 if(ele.data('status') == 'new'){
-                    console.log('POST', '/caselink/link/', JSON.stringify(data))
+                    console.log('POST', '/link/', JSON.stringify(data))
                     promises.push($.ajax({
                         contentType: "application/json; charset=utf-8",
                         method: 'POST',
-                        url:'/caselink/link/',
+                        url:'/link/',
                         data: JSON.stringify(data),
                     }));
                 }
@@ -183,7 +183,7 @@
                             var linkage_list = linkage_modal.find('#linkage_list').empty()
                             linkage_modal.data('deleted', []);
                             linkage_modal.data('row', table.row(this));
-                            $.get("/caselink/manual/" + d.polarion + "/link/").done(function(data){
+                            $.get("/manual/" + d.polarion + "/link/").done(function(data){
                                 $.each(data, function(idx, ele){
                                     var new_item = linkage_list_item.clone();
                                     new_item.find("#linkage_pattern").val(ele.autocase_pattern);
@@ -209,8 +209,8 @@
                             var d = row.data();
                             var linkage_list = linkage_modal.find('#linkage_list').empty()
                             if(!d.need_automation){
-                                $.get("/caselink/control/maitai_request/" + d.polarion).done(function(data){
-                                    $.get("/caselink/manual/" + d.polarion + "/").done(function(data){
+                                $.get("/control/maitai_request/" + d.polarion).done(function(data){
+                                    $.get("/manual/" + d.polarion + "/").done(function(data){
                                         table.row(row).data(data).draw(false);
                                     });
                                     alert("Maitai create, ID: " + data.id);
@@ -246,7 +246,7 @@
                 });
 
                 var fr_select = linkage_list_item.find('#linkage_framework');
-                $.get("/caselink/framework/").done(function(d){
+                $.get("/framework/").done(function(d){
                     d = d.results;
                     $.each(d, function(idx, d){
                         fr_select.append('<option value="' + d.name + '">' + d.name + '</option>');
