@@ -161,6 +161,6 @@ def sync_with_polarion():
         workitem.save()
 
     for wi_id in deleted_wi:
-        models.WorkItem.objects.get(id=wi_id).delete()
+        models.WorkItem.objects.get(id=wi_id).mark_deleted()
 
     return "Created: " + ', '.join(new_wi) + "\nDeleted: " + ', '.join(deleted_wi)

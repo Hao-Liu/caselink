@@ -11,7 +11,7 @@
   message: "Auto case have no manual case linked"
 
 "WORKITEM_DELETED":
-  message: "Manual case linked to the auto case has been deleted"
+  message: "Manual case has been deleted"
 
 "WORKITEM_MULTI_PATTERN":
   message: "Manual case linked to multiple caselink"

@@ -100,6 +100,10 @@ class WorkItem(models.Model):
             list(self.caselinks.all())
         )
 
+    def mark_deleted(self):
+        self.errors.add("WORKITEM_DELETED")
+        self.save()
+
     @transaction.atomic
     def error_check(self, depth=1):
         if depth > 0:
@@ -109,7 +113,10 @@ class WorkItem(models.Model):
 
         self.error_related.clear()
         self.errors.clear()
-        self.save()
+
+        deleted = False
+        if self.errors.filter(id="WORKITEM_DELETED").exists():
+            deleted = True
 
         cases_duplicate = WorkItem.objects.filter(title=self.title)
         if len(cases_duplicate) > 1:
@@ -135,6 +142,8 @@ class WorkItem(models.Model):
                 if link.title != self.title:
                     self.errors.add("WORKITEM_TITLE_INCONSISTENCY")
 
+        if deleted:
+            self.errors.add("WORKITEM_DELETED")
         if depth > 0:
             for item in self.get_related():
                 item.error_check(depth - 1)
