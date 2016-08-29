@@ -283,7 +283,7 @@ def _load_bug(failures):
         case_updating = failure.get('case-updating', None)
         workitems = failure.get('workitems', None)
         if (bug_id and case_updating) or (not bug_id and not case_updating):
-            print "Bad entry: " + str(failure)
+            print("Bad entry: " + str(failure))
             continue
 
         bug = None

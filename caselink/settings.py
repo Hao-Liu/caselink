@@ -147,5 +147,5 @@ CASELINK_MAITAI = {
 try:
     from caselink.settings_instance import *
 except ImportError:
-    print "Instance setting not found."
+    print("Instance setting not found.")
 

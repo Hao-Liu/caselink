@@ -182,7 +182,6 @@ def upload(request):
 
 
 def create_maitai_request(request, workitem_id=None):
-    print settings.CASELINK_MAITAI
     if not settings.CASELINK_MAITAI['ENABLE']:
         reason = (
             settings.CASELINK_MAITAI['REASON'] or 'Maitai disabled, please contact the admin.')

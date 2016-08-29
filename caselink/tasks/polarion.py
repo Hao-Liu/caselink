@@ -21,10 +21,6 @@ MANUAL_SPACE = 'Virt-LibvirtQE'
 DEFAULT_COMPONENT = 'libvirt'
 
 
-class literal(unicode):
-    pass
-
-
 def load_polarion(project, space, load_automation=False):
     """
     Load all Manual cases with given project and spave, return a dictionary,
@@ -42,8 +38,8 @@ def load_polarion(project, space, load_automation=False):
         return all_cases
 
     obj = OrderedDict([
-        ('project', literal(project)),
-        ('space', literal(space)),
+        ('project', project),
+        ('space', space),
         ('documents', OrderedDict()),
     ])
     docs = Document.get_documents(
@@ -53,8 +49,8 @@ def load_polarion(project, space, load_automation=False):
             current_task.update_state(state='PROGRESS',
                                       meta={'current': doc_idx, 'total': len(docs)})
         obj_doc = OrderedDict([
-            ('title', literal(doc.title)),
-            ('type', literal(doc.type)),
+            ('title', doc.title),
+            ('type', doc.type),
             ('project', project),
             ('work_items', OrderedDict()),
             ('updated', doc.updated),
@@ -62,13 +58,13 @@ def load_polarion(project, space, load_automation=False):
         wis = doc.get_work_items(None, True, fields=workitem_fields_to_load)
         for wi_idx, wi in enumerate(wis):
             obj_wi = OrderedDict([
-                ('title', literal(wi.title)),
-                ('type', literal(wi.type)),
+                ('title', wi.title),
+                ('type', wi.type),
                 ('project', project),
                 ('updated', wi.updated),
             ])
-            obj_doc['work_items'][literal(wi.work_item_id)] = obj_wi
-        obj['documents'][literal(doc.document_id)] = obj_doc
+            obj_doc['work_items'][wi.work_item_id] = obj_wi
+        obj['documents'][doc.document_id] = obj_doc
     cases = flatten_cases(obj)
     if load_automation:
         sync_automation(cases, mode="poll")
