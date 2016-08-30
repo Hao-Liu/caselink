@@ -51,7 +51,8 @@ def data(request):
         select
         caselink_autocase.id AS "case",
         caselink_caselink.title as "title",
-        caselink_caselink.workitem_id as "polarion"
+        caselink_caselink.workitem_id as "polarion",
+        caselink_caselink.framework_id as "framework"
         from
         ((
         caselink_autocase
@@ -63,9 +64,12 @@ def data(request):
 
         for autocase in dictfetchall(cursor):
             autocase_id = autocase['case']
+            framework = autocase['framework']
             if len(json_list) == 0 or json_list[-1]['case'] != autocase_id:
                 json_list.append({
                     'case': autocase_id,
+                    'framework': framework,
+                    'components': [],
                     'title': [],
                     'polarion': [],
                     'errors': [],
@@ -94,6 +98,25 @@ def data(request):
             while json_list[pos]['case'] != autocase['case']:
                 pos += 1
             json_list[pos].get('errors').append(autocase['errors'])
+
+        cursor.execute(
+            """
+            select
+            caselink_autocase.id AS "case",
+            caselink_autocase_components.component_id AS "component"
+            from
+            (
+            caselink_autocase
+            inner join caselink_autocase_components on caselink_autocase.id = caselink_autocase_components.autocase_id)
+            order by "case";
+            """
+        )
+
+        pos = 0;
+        for autocase in dictfetchall(cursor):
+            while json_list[pos]['case'] != autocase['case']:
+                pos += 1
+            json_list[pos].get('components').append(autocase['component'])
 
         cursor.execute(
             """
