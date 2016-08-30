@@ -50,7 +50,6 @@ class Component(models.Model):
 
 class Framework(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
-    components = models.ManyToManyField(Component)
     _min_dump = ('name', 'components', )
     def __str__(self):
         return self.name
@@ -66,7 +65,7 @@ class Project(models.Model):
 
 class Document(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
-    components = models.ManyToManyField(Component)
+    components = models.ManyToManyField(Component, blank=True)
     title = models.CharField(max_length=65535)
     _min_dump = ('id', 'component', 'title', )
     def __str__(self):
@@ -146,6 +145,7 @@ class WorkItem(models.Model):
 class AutoCase(models.Model):
     id = models.CharField(max_length=65535, primary_key=True)
     archs = models.ManyToManyField(Arch, blank=True, related_name='autocases')
+    components = models.ManyToManyField(Component, related_name='autocases', blank=True)
     framework = models.ForeignKey(Framework, null=True, on_delete=models.PROTECT,
                                   related_name='autocases')
     start_commit = models.CharField(max_length=255, blank=True)
@@ -287,7 +287,7 @@ class Bug(models.Model):
 
 
 class AutoCaseFailure(models.Model):
-    autocases = models.ManyToManyField(AutoCase, related_name="failures")
+    autocases = models.ManyToManyField(AutoCase, related_name="failures", blank=True)
     type = models.CharField(max_length=255)
     framework = models.ForeignKey(Framework, on_delete=models.PROTECT, null=True,
                                   related_name='autocase_failures')
