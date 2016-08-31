@@ -143,6 +143,11 @@ def sync_with_polarion():
 
         workitem.project, created = models.Project.objects.get_or_create(name=wi['project'])
 
+        if 'automation' in wi:
+            workitem.automation = 'automated' if wi['automation'] == 'automated' else 'notautomated'
+
+        workitem.save()
+
         for doc_id in wi['documents']:
             doc, created = models.Document.objects.get_or_create(id=doc_id)
             if created:
@@ -156,9 +161,6 @@ def sync_with_polarion():
                 arch, _ = models.Arch.objects.get_or_create(name=arch_name)
                 arch.workitems.add(workitem)
                 arch.save()
-
-        if 'automation' in wi:
-            workitem.automation = 'automated' if wi['automation'] == 'automated' else 'notautomated'
 
         if 'errors' in wi:
             for error_message in wi['errors']:
