@@ -36,4 +36,7 @@ def run():
     init_error_checking()
 
 if __name__ == '__main__':
+    if sys.version_info < (3, 0):
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
     run()
