@@ -84,7 +84,7 @@
                             </ul>
                         </div>
                         <div class="panel panel-default" id="result_list">
-                            <div class="panel-heading">Test results
+                            <div class="panel-heading">Task results
                             </div>
                             <ul class="list-group">
                                 <li class="list-group-item empty-item">No Results</li>
@@ -251,7 +251,7 @@
 
                         result_list.empty();
                         if($.isEmptyObject(data.results)) {
-                            backup_list.append(empty_task);
+                            backup_list.append(empty_backup);
                         }
                         else{
                             for(var i = 0, len = data.results.length; i < len; i++){
