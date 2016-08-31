@@ -144,6 +144,11 @@ CASELINK_MAITAI = {
     'URL': '',
 }
 
+CASELINK_POLARION = {
+    'ENABLE': False,
+    'REASON': 'Polarion support is disabled for now, please contract the admin.',
+}
+
 try:
     from caselink.settings_instance import *
 except ImportError:

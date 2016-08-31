@@ -11,9 +11,9 @@ except ImportError:
     PYLARION_INSTALLED = False
     pass
 
+from django.conf import settings
 from caselink import models
 from celery import shared_task, current_task
-
 
 PROJECT = 'RedHatEnterpriseLinux7'
 AUTO_SPACE = 'Virt-LibvirtAuto'
@@ -119,6 +119,8 @@ def sync_automation(workitem_dict, mode="poll"):
 def sync_with_polarion():
     if not PYLARION_INSTALLED:
         return "Pylarion not installed"
+    if not settings.CASELINK_POLARION['ENABLE']:
+        return settings.CASELINK_POLARION['REASON']
     direct_call = current_task.request.id is None
     if not direct_call:
         current_task.update_state(state='PROGRESS')
