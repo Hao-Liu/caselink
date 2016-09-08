@@ -194,7 +194,12 @@ def create_maitai_request(request, workitem_id=None):
     wi = get_object_or_404(WorkItem, pk=workitem_id)
 
     #TODO: remove verify=False
-    res = requests.post(maitai_url, json={}, auth=(maitai_user, maitai_pass), verify=False)
+    res = requests.post(maitai_url, params = {
+        "map_polarionId": workitem_id,
+        "map_polarionUrl": "https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id=" + str(workitem_id),
+        "map_polarionTitle": wi.title,
+    },
+        auth=(maitai_user, maitai_pass), verify=False)
 
     if res.status_code != 200:
         return JsonResponse({'message': 'Maitai server internal error.'}, status = 500);
