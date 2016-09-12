@@ -124,7 +124,7 @@ def sync_with_polarion():
     direct_call = current_task.request.id is None
     if not direct_call:
         current_task.update_state(state='PROGRESS')
-    current_polarion_workitems = load_polarion(PROJECT, MANUAL_SPACE)
+    current_polarion_workitems = load_polarion(PROJECT, MANUAL_SPACE, load_automation=True)
     current_caselink_workitems = models.WorkItem.objects.all()
 
     polarion_set = set(current_polarion_workitems.keys())
@@ -132,6 +132,8 @@ def sync_with_polarion():
 
     new_wi = polarion_set - caselink_set
     deleted_wi = caselink_set - polarion_set
+    update_wi_candidate = caselink_set & polarion_set
+    updated_wi = set()
 
     for wi_id in new_wi:
         wi = current_polarion_workitems[wi_id]
@@ -175,4 +177,19 @@ def sync_with_polarion():
     for wi_id in deleted_wi:
         models.WorkItem.objects.get(id=wi_id).mark_deleted()
 
-    return "Created: " + ', '.join(new_wi) + "\nDeleted: " + ', '.join(deleted_wi)
+    for wi_id in update_wi_candidate:
+        wi = models.WorkItem.objects.get(id=wi_id)
+        if wi.tilte != current_polarion_workitems[wi_id]['title']:
+            updated_wi.add(wi_id)
+            wi.tilte = current_polarion_workitems[wi_id]['title']
+            wi.save()
+        if wi.automation != current_polarion_workitems[wi_id]['automation']:
+            updated_wi.add(wi_id)
+            wi.automation = current_polarion_workitems[wi_id]['automation']
+            wi.save()
+
+    return (
+        "Created: " + ', '.join(new_wi) + "\n" +
+        "Deleted: " + ', '.join(deleted_wi) + "\n" +
+        "Updated: " + ', '.join(updated_wi)
+    )
