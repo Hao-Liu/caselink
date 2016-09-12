@@ -163,7 +163,7 @@ class AutoCase(models.Model):
 
     #Field used to perform runtime error checking
     #error_related = models.ManyToManyField('self', blank=True)
-    _min_dump = ('id', 'archs', 'framework', 'start_commit', 'end_commit', )
+    _min_dump = ('id', 'archs', 'framework', 'start_commit', 'end_commit', 'components', )
 
     def get_related(self):
         """Get related objects for error cheking"""
