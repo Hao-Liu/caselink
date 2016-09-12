@@ -50,9 +50,9 @@ def data(request):
         sql = """
         select
         caselink_autocase.id AS "case",
+        caselink_autocase.framework_id AS "framework",
         caselink_caselink.title as "title",
-        caselink_caselink.workitem_id as "polarion",
-        caselink_caselink.framework_id as "framework"
+        caselink_caselink.workitem_id as "polarion"
         from
         ((
         caselink_autocase
