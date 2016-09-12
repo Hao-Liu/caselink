@@ -310,7 +310,7 @@ def dump_all_db():
     #TODO Base dir
     filename=BASE_DIR + "/" + str(datetime.datetime.now().isoformat()) + ".yaml"
     with open(filename, 'w+') as base_fp:
-        for Model in [Error, Framework, Project, Document, #Meta models
+        for Model in [Error, Framework, Project, Document, Component, Arch, #Meta models
                       WorkItem, AutoCase, CaseLink, Bug, AutoCaseFailure]:
             base_fp.write(serializers.serialize('yaml', Model.objects.all(), fields=Model._min_dump))
 

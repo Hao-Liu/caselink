@@ -36,21 +36,21 @@ class Error(models.Model):
 
 class Arch(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
-    _min_dump = ()
+    _min_dump = ('id',)
     def __str__(self):
         return self.name
 
 
 class Component(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
-    _min_dump = ()
+    _min_dump = ('name',)
     def __str__(self):
         return self.name
 
 
 class Framework(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
-    _min_dump = ('name', 'components', )
+    _min_dump = ('name', )
     def __str__(self):
         return self.name
 
@@ -157,8 +157,8 @@ class AutoCase(models.Model):
     components = models.ManyToManyField(Component, related_name='autocases', blank=True)
     framework = models.ForeignKey(Framework, null=True, on_delete=models.PROTECT,
                                   related_name='autocases')
-    start_commit = models.CharField(max_length=255, blank=True)
-    end_commit = models.CharField(max_length=255, blank=True)
+    start_commit = models.CharField(max_length=255, blank=True, null=True)
+    end_commit = models.CharField(max_length=255, blank=True, null=True)
     errors = models.ManyToManyField(Error, blank=True, related_name='autocases')
 
     #Field used to perform runtime error checking

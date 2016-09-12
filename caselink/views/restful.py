@@ -237,3 +237,21 @@ class FrameworkList(generics.ListCreateAPIView):
 class FrameworkDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Framework.objects.all()
     serializer_class = FrameworkSerializer
+
+class ComponentList(generics.ListCreateAPIView):
+    queryset = Component.objects.all()
+    serializer_class = ComponentSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+
+class ComponentDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Component.objects.all()
+    serializer_class = ComponentSerializer
+
+class ArchList(generics.ListCreateAPIView):
+    queryset = Arch.objects.all()
+    serializer_class = ArchSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+
+class ArchDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Arch.objects.all()
+    serializer_class = ArchSerializer

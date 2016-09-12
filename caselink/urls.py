@@ -46,6 +46,12 @@ urlpatterns = [
     url(r'^framework/$', restful.FrameworkList.as_view(), name='framework'),
     url(r'^framework/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.FrameworkDetail.as_view(), name='framework_detail'),
 
+    url(r'^component/$', restful.ComponentList.as_view(), name='component'),
+    url(r'^component/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.ComponentDetail.as_view(), name='component_detail'),
+
+    url(r'^arch/$', restful.ArchList.as_view(), name='arch'),
+    url(r'^arch/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.ArchDetail.as_view(), name='arch_detail'),
+
     # API for get/start tasks, backup/restore
     url(r'^control/$', control.overview, name='task_overview'),
     url(r'^control/task/$', control.task, name='task_list'),

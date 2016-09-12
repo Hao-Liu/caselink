@@ -42,3 +42,13 @@ class AutoCaseFailureSerializer(serializers.ModelSerializer):
 class FrameworkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Framework
+
+
+class ComponentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Component
+
+
+class ArchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Arch
