@@ -34,7 +34,7 @@ function DataSearchTable(param){
                 .on('change', function () {
                     var val = $.fn.dataTable.util.escapeRegex($(this).val());
                     if(selectorColumns[title].strict){
-                        var reg = val ? "^" + val + "$" : '^$';
+                        var reg = val ? "^" + val + "$" : '.*';
                     }
                     else{
                         var reg = val ? val : '';
