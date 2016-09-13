@@ -28,6 +28,12 @@
 "WORKITEM_TITLE_DUPLICATE":
   message: "Duplicate name found"
 
+"AUTOCASE_PR_NOT_MERGED":
+  message: "The pull request which contain this auto case haven't been merged."
+
+"AUTOCASE_DELETED_IN_PR":
+  message: "There is a open pull request which will delete this pull request."
+
 #TODO
 "BUG_LINKAGE_INCONSISTENCY":
   message: "Some manual case and autotest case failing by this bug have no linkage between them."
