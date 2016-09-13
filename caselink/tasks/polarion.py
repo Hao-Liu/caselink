@@ -14,6 +14,7 @@ except ImportError:
 from django.conf import settings
 from caselink import models
 from celery import shared_task, current_task
+from django.db import transaction
 
 PROJECT = 'RedHatEnterpriseLinux7'
 AUTO_SPACE = 'Virt-LibvirtAuto'
@@ -54,7 +55,7 @@ def load_polarion(project, space, load_automation=False):
         project, space, fields=['document_id', 'title', 'type', 'updated', 'project_id'])
     for doc_idx, doc in enumerate(docs):
         if not direct_call:
-            current_task.update_state(state='PROGRESS',
+            current_task.update_state(state='Fetching documents',
                                       meta={'current': doc_idx, 'total': len(docs)})
         obj_doc = OrderedDict([
             ('title', literal(doc.title)),
@@ -93,7 +94,7 @@ def sync_automation(workitem_dict, mode="poll"):
     for wi_id, wi in workitem_dict.items():
         current += 1
         if not direct_call:
-            current_task.update_state(state='PROGRESS',
+            current_task.update_state(state='Fetching automation status',
                                       meta={'current': current, 'total': total})
         polarion_wi = _WorkItem(project_id=PROJECT, work_item_id=wi_id)
         if mode == "poll":
@@ -104,6 +105,8 @@ def sync_automation(workitem_dict, mode="poll"):
             except AttributeError:
                 # Skip heading / case with no automation attribute
                 pass
+            # If automation is not set, set to not automated.
+            wi.setdefault('automation', 'notautomated')
 
         elif mode == "push":
             raise RuntimeError('push disabled')
@@ -121,9 +124,6 @@ def sync_with_polarion():
         return "Pylarion not installed"
     if not settings.CASELINK_POLARION['ENABLE']:
         return settings.CASELINK_POLARION['REASON']
-    direct_call = current_task.request.id is None
-    if not direct_call:
-        current_task.update_state(state='PROGRESS')
     current_polarion_workitems = load_polarion(PROJECT, MANUAL_SPACE, load_automation=True)
     current_caselink_workitems = models.WorkItem.objects.all()
 
@@ -132,61 +132,69 @@ def sync_with_polarion():
 
     new_wi = polarion_set - caselink_set
     deleted_wi = caselink_set - polarion_set
-    update_wi_candidate = caselink_set & polarion_set
+    existing_wi = caselink_set & polarion_set
     updated_wi = set()
 
+    direct_call = current_task.request.id is None
+    if not direct_call:
+        current_task.update_state(state='Updating database.')
+
     for wi_id in new_wi:
-        wi = current_polarion_workitems[wi_id]
-        workitem = models.WorkItem(
-            id=wi_id,
-            title=wi['title'],
-            type=wi['type'],
-        )
+        with transaction.atomic():
+            wi = current_polarion_workitems[wi_id]
+            workitem = models.WorkItem(
+                #TODO: automation
+                id=wi_id,
+                title=wi['title'],
+                type=wi['type'],
+            )
 
-        workitem.project, created = models.Project.objects.get_or_create(name=wi['project'])
+            workitem.project, created = models.Project.objects.get_or_create(name=wi['project'])
 
-        if 'automation' in wi:
-            workitem.automation = 'automated' if wi['automation'] == 'automated' else 'notautomated'
+            if 'automation' in wi:
+                workitem.automation = 'automated' if wi['automation'] == 'automated' else 'notautomated'
 
-        workitem.save()
+            workitem.save()
 
-        for doc_id in wi['documents']:
-            doc, created = models.Document.objects.get_or_create(id=doc_id)
-            if created:
-                doc.title = doc_id
-                doc.component = models.Component.objects.get_or_create(name=DEFAULT_COMPONENT)
-            doc.workitems.add(workitem)
-            doc.save()
-
-        if 'arch' in wi:
-            for arch_name in wi['arch']:
-                arch, _ = models.Arch.objects.get_or_create(name=arch_name)
-                arch.workitems.add(workitem)
-                arch.save()
-
-        if 'errors' in wi:
-            for error_message in wi['errors']:
-                error, created = models.Error.objects.get_or_create(message=error_message)
+            for doc_id in wi['documents']:
+                doc, created = models.Document.objects.get_or_create(id=doc_id)
                 if created:
-                    error.id = error_message
-                    error.workitems.add(workitem)
-                    error.save()
+                    doc.title = doc_id
+                    doc.component = models.Component.objects.get_or_create(name=DEFAULT_COMPONENT)
+                doc.workitems.add(workitem)
+                doc.save()
 
-        workitem.save()
+            if 'arch' in wi:
+                for arch_name in wi['arch']:
+                    arch, _ = models.Arch.objects.get_or_create(name=arch_name)
+                    arch.workitems.add(workitem)
+                    arch.save()
+
+            if 'errors' in wi:
+                for error_message in wi['errors']:
+                    error, created = models.Error.objects.get_or_create(message=error_message)
+                    if created:
+                        error.id = error_message
+                        error.workitems.add(workitem)
+                        error.save()
+
+            workitem.save()
 
     for wi_id in deleted_wi:
         models.WorkItem.objects.get(id=wi_id).mark_deleted()
 
-    for wi_id in update_wi_candidate:
-        wi = models.WorkItem.objects.get(id=wi_id)
-        if wi.tilte != current_polarion_workitems[wi_id]['title']:
-            updated_wi.add(wi_id)
-            wi.tilte = current_polarion_workitems[wi_id]['title']
-            wi.save()
-        if wi.automation != current_polarion_workitems[wi_id]['automation']:
-            updated_wi.add(wi_id)
-            wi.automation = current_polarion_workitems[wi_id]['automation']
-            wi.save()
+    for wi_id in existing_wi:
+        with transaction.atomic():
+            wi = models.WorkItem.objects.get(id=wi_id)
+            wi.mark_notdeleted()
+            if wi.title != current_polarion_workitems[wi_id]['title']:
+                updated_wi.add(wi_id)
+                wi.title = current_polarion_workitems[wi_id]['title']
+                wi.save()
+            if wi.automation != current_polarion_workitems[wi_id]['automation']:
+                updated_wi.add(wi_id)
+                wi.automation = current_polarion_workitems[wi_id]['automation']
+                wi.save()
 
     return (
         "Created: " + ', '.join(new_wi) + "\n" +

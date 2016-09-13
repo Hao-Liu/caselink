@@ -104,6 +104,10 @@ class WorkItem(models.Model):
         self.errors.add("WORKITEM_DELETED")
         self.save()
 
+    def mark_notdeleted(self):
+        self.errors.remove("WORKITEM_DELETED")
+        self.save()
+
     @transaction.atomic
     def error_check(self, depth=1):
         if depth > 0:
