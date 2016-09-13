@@ -257,7 +257,7 @@
                             for(var i = 0, len = data.results.length; i < len; i++){
                                 item = result_item.clone()
                                 item.prepend("<h3>"+ data.results[i].task_id +"</h3>");
-                                item.find(".well").text(data.results[i].result)
+                                item.find(".well").html(prettier(data.results[i].result))
                                 result_list.append(item);
                             }
                         }
