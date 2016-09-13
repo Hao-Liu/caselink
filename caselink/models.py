@@ -116,11 +116,12 @@ class WorkItem(models.Model):
                 item.error_check(depth - 1)
 
         self.error_related.clear()
-        self.errors.clear()
 
         deleted = False
         if self.errors.filter(id="WORKITEM_DELETED").exists():
             deleted = True
+
+        self.errors.clear()
 
         cases_duplicate = WorkItem.objects.filter(title=self.title)
         if len(cases_duplicate) > 1:
