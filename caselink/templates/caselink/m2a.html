@@ -210,9 +210,8 @@
                             var linkage_list = linkage_modal.find('#linkage_list').empty()
                             if(!d.need_automation){
                                 $.get("/control/maitai_request/" + d.polarion).done(function(data){
-                                    $.get("/manual/" + d.polarion + "/").done(function(data){
-                                        table.row(row).data(data).draw(false);
-                                    });
+                                    d.maitai_id = data.id;
+                                    table.row(row).data(d).draw(false);
                                     alert("Maitai create, ID: " + data.id);
                                 }).fail(function(jqXHR, textStauts){
                                     try{
