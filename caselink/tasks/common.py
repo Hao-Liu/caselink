@@ -178,7 +178,7 @@ def _load_manualcase_db(polarion):
         workitem.title = case['title']
         workitem.type = case['type']
         workitem.commit = case['commit']
-        workitem.automation = 'automated' if case['automated'] else 'noautomated'
+        workitem.automation = 'automated' if case['automated'] else 'notautomated'
 
         workitem.project, created = Project.objects.get_or_create(name=case['project'])
         if created:

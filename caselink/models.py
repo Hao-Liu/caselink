@@ -137,7 +137,7 @@ class WorkItem(models.Model):
             self.errors.add("WORKITEM_MULTI_PATTERN")
 
         if len(links) == 0:
-            if self.automation != 'notautomated':
+            if self.automation not in ['notautomated', 'manualonly']:
                 self.errors.add("WORKITEM_AUTOMATION_INCONSISTENCY")
         else:
             if self.automation != 'automated':
