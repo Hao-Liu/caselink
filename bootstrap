@@ -3,7 +3,7 @@
 USER="nobody"
 FORCE_CLEAN="false"
 START_WORKER="false"
-SUDO_CMD="su - $USER -c "
+SUDO_CMD="sudo -u $USER "
 
 function clean_server()
 {
