@@ -198,6 +198,7 @@ def create_maitai_request(request, workitem_id=None):
         "map_polarionId": workitem_id,
         "map_polarionUrl": "https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id=" + str(workitem_id),
         "map_polarionTitle": wi.title,
+        "map_issueAssignee": settings.CASELINK_MAITAI['ASSIGNEE'],
     },
         auth=(maitai_user, maitai_pass), verify=False)
 

@@ -139,6 +139,7 @@ CASELINK = {
 CASELINK_MAITAI = {
     'ENABLE': False,
     'REASON': 'Maitai haven\'t implemented the workflow we needed yet.',
+    'ASSIGNEE': '',
     'USER': '',
     'PASSWORD': '',
     'URL': '',
