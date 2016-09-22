@@ -164,6 +164,7 @@ class AutoCase(models.Model):
                                   related_name='autocases')
     start_commit = models.CharField(max_length=255, blank=True, null=True)
     end_commit = models.CharField(max_length=255, blank=True, null=True)
+    pr = models.CharField(max_length=255, blank=True, null=True)
     errors = models.ManyToManyField(Error, blank=True, related_name='autocases')
 
     #Field used to perform runtime error checking
