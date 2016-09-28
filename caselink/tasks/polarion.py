@@ -114,7 +114,7 @@ def sync_automation(workitem_dict, mode="poll"):
             session.tx_begin()
             if wi['automation'] in ['notautomated', None]: #TODO: What?
                 value = EnumOptionId(enum_id='automated')
-                wi._set_custom_field('caseautomation', value._suds_object)
+                polarion_wi._set_custom_field('caseautomation', value._suds_object)
             session.tx_commit()
 
 
