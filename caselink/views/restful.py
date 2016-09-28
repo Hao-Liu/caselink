@@ -45,7 +45,7 @@ class AutoCaseList(generics.ListCreateAPIView):
     queryset = AutoCase.objects.all()
     serializer_class = AutoCaseSerializer
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ('caselinks', 'failures', 'framework', 'errors', )
+    filter_fields = ('caselinks', 'failures', 'framework', 'errors', 'pr')
 
     def perform_create(self, serializer):
         instance = serializer.save()
