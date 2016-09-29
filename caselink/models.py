@@ -193,6 +193,10 @@ class AutoCase(models.Model):
 
     @transaction.atomic
     def error_check(self, depth=1):
+        #TODO: Use external errors list for prevent certain error from being cleaned.
+        add_in_pr = self.errors.filter(id="AUTOCASE_PR_NOT_MERGED").exists()
+        deleted_in_pr = self.errors.filter(id="AUTOCASE_DELETED_IN_PR").exists()
+
         self.errors.clear()
 
         if len(self.caselinks.all()) < 1:
@@ -204,6 +208,11 @@ class AutoCase(models.Model):
         if depth > 0:
             for item in self.get_related():
                 item.error_check(depth - 1)
+
+        if add_in_pr:
+            self.errors.add("AUTOCASE_PR_NOT_MERGED")
+        if deleted_in_pr:
+            self.errors.add("AUTOCASE_DELETED_IN_PR")
 
         self.save()
 
