@@ -34,6 +34,9 @@
 "AUTOCASE_DELETED_IN_PR":
   message: "There is a open pull request which will delete this pull request."
 
+"AUTOCASE_CONFLICT_IN_PR":
+  message: "More than one pull request is tring to add/delete this auto case."
+
 #TODO
 "BUG_LINKAGE_INCONSISTENCY":
   message: "Some manual case and autotest case failing by this bug have no linkage between them."
