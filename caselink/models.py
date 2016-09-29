@@ -88,7 +88,8 @@ class WorkItem(models.Model):
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)
 
-    _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs', 'documents', )
+    _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs',
+                 'documents', 'maitai_id')
 
     def __str__(self):
         return self.id
