@@ -187,6 +187,16 @@ def sync_with_polarion():
         with transaction.atomic():
             wi = models.WorkItem.objects.get(id=wi_id)
             wi.mark_notdeleted()
+
+            wi.documents.clear()
+            for doc_id in current_polarion_workitems[wi_id]['documents']:
+                doc, created = models.Document.objects.get_or_create(id=doc_id)
+                if created:
+                    doc.title = doc_id
+                    doc.component = models.Component.objects.get_or_create(name=DEFAULT_COMPONENT)
+                doc.workitems.add(workitem)
+                doc.save()
+
             if wi.title != current_polarion_workitems[wi_id]['title']:
                 updated_wi.add(wi_id)
                 wi.title = current_polarion_workitems[wi_id]['title']
