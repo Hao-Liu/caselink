@@ -5,23 +5,22 @@ from django.http import JsonResponse
 from django.template import RequestContext, loader
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.db import connection
 
+from caselink.form import MaitaiAutomationRequest
 from caselink.models import *
 from caselink.serializers import *
 
 
 def a2m(request):
-    template = loader.get_template('caselink/a2m.html')
-    context = RequestContext(request, {})
-    return HttpResponse(template.render(context))
+    form = MaitaiAutomationRequest()
+    return render(request, 'caselink/a2m.html')
 
 
 def m2a(request):
-    template = loader.get_template('caselink/m2a.html')
-    context = RequestContext(request, {})
-    return HttpResponse(template.render(context))
+    form = MaitaiAutomationRequest()
+    return render(request, 'caselink/m2a.html', {'maitai_automation_form': form})
 
 
 def index(request):

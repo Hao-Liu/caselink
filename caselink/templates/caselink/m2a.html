@@ -1,4 +1,5 @@
 {% extends "caselink/index.html" %}
+{% load bootstrap %}
 {% block title %} Libvirt Manual-Auto Case Linkage {% endblock %}
 {% block content %}
 
@@ -42,6 +43,28 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<div class="modal fade" tabindex="-1" role="dialog" id="maitai_automation_modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Create Maitai Automation Request</h4>
+      </div>
+      <div class="modal-body">
+          <form id="maitai_automation" method="get" accept-charset="utf-8">
+              {% csrf_token %}
+              {{ maitai_automation_form|bootstrap }}
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="maitai_automation_submit">Submit</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 
 <div class="panel panel-default">
     <!-- Default panel contents -->
@@ -100,6 +123,7 @@
         var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
         var linkage_modal = $('#linkage_modal');
         var linkage_list_item = $('.linkage-list-item').detach();
+        var maitai_automation_modal = $("#maitai_automation_modal");
 
         //Add listen for linkage editor
         linkage_modal.on("click", "#linkage_add_new", function(){
@@ -108,6 +132,7 @@
             new_item.data('status', 'new');
             linkage_list.append(new_item);
         });
+
         linkage_modal.on("click", "#linkage_save", function(){
             var button = $(this)
             button.prop('disabled', true);
@@ -166,6 +191,44 @@
             linkage_item.remove();
         });
 
+        $("#maitai_automation_submit").click(function(){
+            var button = $(this)
+            var form = maitai_automation_modal.find('form');
+            var posting = $.post("/control/maitai_request/", form.serialize());
+            button.prop('disabled', true);
+            posting.done(function(data){
+                for(var polarion in data){
+                    var maitai_id = data[polarion].maitai_id;
+                    var message = data[polarion].message;
+                    if(maitai_id){
+                        var row = table.row(function(idx, data, node){return data.polarion == polarion;});
+                        var d = row.data();
+                        d.maitai_id = maitai_id;
+                        table.row(row).data(d).draw(false);
+                        alert("Maitai create for " + polarion + ", ID: " + maitai_id);
+                    }
+                    else{
+                        alert('Ajax failure for " + polarion + ": ' + data[polarion].message);
+                    }
+                }
+            }).fail(function(jqXHR, textStauts){
+                try{
+                    var data = JSON.stringify(jqXHR.responseText)
+                    if(data.message){
+                        alert('Ajax failure: ' + data.message);
+                    }
+                    else{
+                        alert('Ajax failure: ' + jqXHR.responseText);
+                    }
+                }
+                catch (e){
+                    alert('Unknown failure, detail: ' + jqXHR.responseText);
+                }
+            }).always(function(){
+                maitai_automation_modal.modal("hide");
+                button.prop('disabled', false);
+            });
+        });
 
         var table = $('#sortable-table').DataSearchTable({
             select: {
@@ -204,34 +267,19 @@
                     text: 'Create Automated Request',
                     action: function ( e, dt, node, config ) {
                         var filterSet = table.$('tr', {selected:true});
+                        var input = maitai_automation_modal.find("input[name='manual_cases']");
+                        input.val('');
                         filterSet.each(function(){
                             var row = table.row(this)
                             var d = row.data();
-                            var linkage_list = linkage_modal.find('#linkage_list').empty()
                             if(!d.need_automation){
-                                $.get("/control/maitai_request/" + d.polarion).done(function(data){
-                                    d.maitai_id = data.id;
-                                    table.row(row).data(d).draw(false);
-                                    alert("Maitai create, ID: " + data.id);
-                                }).fail(function(jqXHR, textStauts){
-                                    try{
-                                        var data = JSON.stringify(jqXHR.responseText)
-                                        if(data.message){
-                                            alert('Ajax failure: ' + data.message);
-                                        }
-                                        else{
-                                            alert('Ajax failure: ' + jqXHR.responseText);
-                                        }
-                                    }
-                                    catch (e){
-                                        alert('Unknown failure, detail: ' + jqXHR.responseText);
-                                    }
-                                });
+                                input.val(input.val() + " " +d.polarion);
                             }
                             else{
-                                alert('Maitai pending.');
+                                alert('Maitai already pending.');
                             }
-                        })
+                        });
+                        maitai_automation_modal.modal("show");
                     }
                 },
 

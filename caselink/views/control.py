@@ -5,6 +5,7 @@ from django.conf import settings
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.http import Http404
 from django.db import IntegrityError, OperationalError, transaction
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render_to_response
 from django.shortcuts import get_object_or_404
 from django import forms
@@ -16,6 +17,8 @@ from caselink.tasks.polarion import sync_with_polarion
 from celery.task.control import inspect
 from celery.result import AsyncResult
 from djcelery.models import TaskMeta
+
+from caselink.form import MaitaiAutomationRequest
 
 import xml.etree.ElementTree as ET
 
@@ -181,43 +184,64 @@ def upload(request):
         return HttpResponseBadRequest()
 
 
-def create_maitai_request(request, workitem_id=None):
+def create_maitai_request(request):
     if not settings.CASELINK_MAITAI['ENABLE']:
         reason = (
             settings.CASELINK_MAITAI['REASON'] or 'Maitai disabled, please contact the admin.')
-        return JsonResponse({'message': reason}, status = 400);
+        return JsonResponse({'message': reason}, status=400)
+
+    maitai_request = MaitaiAutomationRequest(request.POST)
+    if not maitai_request.is_valid():
+        return JsonResponse({'message': "Invalid parameters"}, status=400)
+
+    workitem_ids = maitai_request.cleaned_data['manual_cases'].split()
+    assignee = maitai_request.cleaned_data['assignee'].split()
+    labels = maitai_request.cleaned_data['labels']
 
     maitai_pass = settings.CASELINK_MAITAI['PASSWORD']
     maitai_user = settings.CASELINK_MAITAI['USER']
     maitai_url = settings.CASELINK_MAITAI['URL']
 
-    wi = get_object_or_404(WorkItem, pk=workitem_id)
+    ret = {}
 
-    #TODO: remove verify=False
-    res = requests.post(maitai_url, params = {
-        "map_polarionId": workitem_id,
-        "map_polarionUrl": "https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id=" + str(workitem_id),
-        "map_polarionTitle": wi.title,
-        "map_issueAssignee": settings.CASELINK_MAITAI['ASSIGNEE'],
-    },
-        auth=(maitai_user, maitai_pass), verify=False)
+    for workitem_id in workitem_ids:
+        try:
+            wi = WorkItem.objects.get(pk=workitem_id)
+        except ObjectDoesNotExist:
+            ret[workitem_id] = {"message": "Workitem doesn't exists."}
+            continue
 
-    if res.status_code != 200:
-        return JsonResponse({'message': 'Maitai server internal error.'}, status = 500);
+        #TODO: remove verify=False
+        res = requests.post(maitai_url, params={
+            "map_polarionId": workitem_id,
+            #TODO: config file
+            "map_polarionUrl": "https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id=" + str(workitem_id),
+            "map_polarionTitle": wi.title,
+            "map_issueAssignee": assignee[0],
+            "map_issueLabels": labels
+        },
+            auth=(maitai_user, maitai_pass), verify=False)
 
-    root = ET.fromstring(res.content)
+        if res.status_code != 200:
+            ret[workitem_id] = {'message': 'Maitai server internal error.'}
+            continue
 
-    process = root.find('process-id').text
-    state = root.find('state').text
-    id = root.find('id').text
-    parentProcessInstanceId = root.find('parentProcessInstanceId').text
-    status = root.find('status').text
+        root = ET.fromstring(res.content)
 
-    if status != 'SUCCESS':
-        return JsonResponse({'message': 'Maitai server returns error.'}, status = 500);
+        process = root.find('process-id').text
+        state = root.find('state').text
+        id = root.find('id').text
+        parentProcessInstanceId = root.find('parentProcessInstanceId').text
+        status = root.find('status').text
 
-    wi.maitai_id = id
-    wi.need_automation = True
-    wi.save()
+        if status != 'SUCCESS':
+            ret[workitem_id] = {'message': 'Maitai server returns error.'}
+            continue
 
-    return JsonResponse({'message': 'Success', 'id': id});
+        wi.maitai_id = id
+        wi.need_automation = True
+        wi.save()
+
+        ret[workitem_id] = {"maitai_id": id}
+
+    return JsonResponse(ret, status=200)

@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crispy_forms',
+    'bootstrapform',
     'rest_framework',
     'caselink',
     'djcelery',
@@ -149,6 +150,9 @@ CASELINK_POLARION = {
     'ENABLE': False,
     'REASON': 'Polarion support is disabled for now, please contract the admin.',
 }
+
+CASELINK_MEMBERS = ('member1 member2')
+CASELINK_DEFAULT_ASSIGNEE = 'member1'
 
 try:
     from caselink.settings_instance import *
