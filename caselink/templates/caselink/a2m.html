@@ -13,6 +13,7 @@
             <th>Documents</th>
             <th>Component</th>
             <th>Framework</th>
+            <th>PR</th>
             <th>Errors</th>
         </thead>
         <tfoot>
@@ -22,6 +23,7 @@
             <th>Documents</th>
             <th>Component</th>
             <th>Framework</th>
+            <th>PR</th>
             <th>Errors</th>
         </tfoot>
     </table>
@@ -43,6 +45,10 @@
                 },
                 {
                     column: 'Documents',
+                    render: prettier,
+                },
+                {
+                    column: 'PR',
                     render: prettier,
                 },
                 {
@@ -83,6 +89,10 @@
                 },
                 {
                     "data": "framework",
+                },
+                {
+                    "data": "pr",
+                    "render":  prettier
                 },
                 {
                     "data": "errors",

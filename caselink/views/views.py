@@ -50,6 +50,7 @@ def data(request):
         sql = """
         select
         caselink_autocase.id AS "case",
+        caselink_autocase.pr AS "pr",
         caselink_autocase.framework_id AS "framework",
         caselink_caselink.title as "title",
         caselink_caselink.workitem_id as "polarion"
@@ -65,10 +66,12 @@ def data(request):
         for autocase in dictfetchall(cursor):
             autocase_id = autocase['case']
             framework = autocase['framework']
+            pr = autocase['pr']
             if len(json_list) == 0 or json_list[-1]['case'] != autocase_id:
                 json_list.append({
                     'case': autocase_id,
                     'framework': framework,
+                    'pr': pr,
                     'components': [],
                     'title': [],
                     'polarion': [],
