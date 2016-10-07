@@ -27,6 +27,7 @@ function setup_server()
 
 
 function run_celery(){
+    #TODO use a better way to stop celery workers.
     pkill -f celery
 
     sudo systemctl restart rabbitmq-server
