@@ -1,0 +1,50 @@
+#This fixture will be loaded to db every update/restart.
+- model: caselink.error
+  pk: MULTIPLE_WORKITEM
+  fields: {message: Auto case linked to multiple caselink/workitem.}
+- model: caselink.error
+  pk: WORKITEM_DELETED
+  fields: {message: Manual case has been deleted}
+- model: caselink.error
+  pk: AUTOCASE_PR_NOT_MERGED
+  fields: {message: The pull request which contain this auto case haven't been merged.}
+- model: caselink.error
+  pk: PATTERN_DUPLICATE
+  fields: {message: More than one caselink shares a same autocase pattern}
+- model: caselink.error
+  pk: BUG_LINKAGE_INCONSISTENCY
+  fields: {message: Some manual case and autotest case failing by this bug have no
+      linkage between them.}
+- model: caselink.error
+  pk: WORKITEM_AUTOMATION_INCONSISTENCY
+  fields: {message: Manual case's automation status differ from linkage db and polarion}
+- model: caselink.error
+  pk: NO_WORKITEM
+  fields: {message: Auto case have no manual case linked}
+- model: caselink.error
+  pk: WORKITEM_FEATURE_INCONSISTENCY
+  fields: {message: Manual case's feature differ from linkage db and polarion}
+- model: caselink.error
+  pk: AUTOCASE_DELETED_IN_PR
+  fields: {message: There is a open pull request which will delete this pull request.}
+- model: caselink.error
+  pk: WORKITEM_MULTI_PATTERN
+  fields: {message: Manual case linked to multiple caselink}
+- model: caselink.error
+  pk: WORKITEM_TITLE_INCONSISTENCY
+  fields: {message: Manual case's title differ from linkage db and polarion}
+- model: caselink.error
+  pk: PATTERN_INVALID
+  fields: {message: Caselink's pattern doesn't match any autocase}
+- model: caselink.error
+  pk: WORKITEM_TITLE_DUPLICATE
+  fields: {message: Duplicate name found}
+- model: caselink.error
+  pk: AUTOCASE_PR_NOT_MERGED
+  fields: {message: The pull request which contain this auto case haven't been merged}
+- model: caselink.error
+  pk: AUTOCASE_DELETED_IN_PR
+  fields: {message: There is a open pull request which will delete this pull request.}
+- model: caselink.error
+  pk: AUTOCASE_CONFLICT_IN_PR
+  fields: {message: More than one pull request is tring to add/delete this auto case.}
