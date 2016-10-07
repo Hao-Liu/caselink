@@ -36,7 +36,7 @@ class Error(models.Model):
 
 class Arch(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
-    _min_dump = ('id',)
+    _min_dump = ('name')
     def __str__(self):
         return self.name
 
