@@ -22,7 +22,11 @@ function setup_server()
     # Start initial database
     $SUDO_CMD python ./manage.py migrate
 
-    $SUDO_CMD python ./setup_db.py
+    $SUDO_CMD python ./manage.py loaddata caselink/fixtures/initial_data.yaml
+
+    $SUDO_CMD python ./manage.py loaddata caselink/fixtures/baseline.yaml
+
+    $SUDO_CMD python ./manage.py manualinit
 }
 
 
@@ -40,6 +44,8 @@ function run_celery(){
 function start_server()
 {
     $SUDO_CMD python ./manage.py migrate
+
+    $SUDO_CMD python ./manage.py loaddata caselink/fixtures/initial_data.yaml
 
     # Run server
     $SUDO_CMD python ./manage.py runserver 0.0.0.0:8888
