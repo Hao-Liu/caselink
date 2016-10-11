@@ -38,19 +38,15 @@ def load_polarion(project, space, load_automation=False):
     workitem_fields_to_load = ['work_item_id', 'type', 'title', 'updated']
     direct_call = current_task.request.id is None
 
-    def flatten_cases(cases):
+    def flatten_cases(docs):
         all_cases = {}
-        for doc_id, doc in cases['documents'].items():
+        for doc_id, doc in docs.items():
             for wi_id, wi in doc['work_items'].items():
                 wi_entry = all_cases.setdefault(wi_id, wi)
                 wi_entry.setdefault('documents', []).append(doc_id)
         return all_cases
 
-    obj = OrderedDict([
-        ('project', literal(project)),
-        ('space', literal(space)),
-        ('documents', OrderedDict()),
-    ])
+    doc_dict = {}
     docs = Document.get_documents(
         project, space, fields=['document_id', 'title', 'type', 'updated', 'project_id'])
     for doc_idx, doc in enumerate(docs):
@@ -73,8 +69,8 @@ def load_polarion(project, space, load_automation=False):
                 ('updated', wi.updated),
             ])
             obj_doc['work_items'][literal(wi.work_item_id)] = obj_wi
-        obj['documents'][literal(doc.document_id)] = obj_doc
-    cases = flatten_cases(obj)
+        doc_dict[literal(doc.document_id)] = obj_doc
+    cases = flatten_cases(doc_dict)
     if load_automation:
         sync_automation(cases, mode="poll")
     return cases
@@ -194,17 +190,18 @@ def sync_with_polarion():
                 if created:
                     doc.title = doc_id
                     doc.component = models.Component.objects.get_or_create(name=DEFAULT_COMPONENT)
-                doc.workitems.add(workitem)
+                doc.workitems.add(wi)
                 doc.save()
 
             if wi.title != current_polarion_workitems[wi_id]['title']:
-                updated_wi.add(wi_id)
                 wi.title = current_polarion_workitems[wi_id]['title']
                 wi.save()
-            if wi.automation != current_polarion_workitems[wi_id]['automation']:
                 updated_wi.add(wi_id)
-                wi.automation = current_polarion_workitems[wi_id]['automation']
-                wi.save()
+            if 'automation' in current_polarion_workitems[wi_id].keys():
+                if wi.automation != current_polarion_workitems[wi_id]['automation']:
+                    wi.automation = current_polarion_workitems[wi_id]['automation']
+                    wi.save()
+                    updated_wi.add(wi_id)
 
     return (
         "Created: " + ', '.join(new_wi) + "\n" +
