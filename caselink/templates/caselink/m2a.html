@@ -267,16 +267,23 @@
                     text: 'Create Automated Request',
                     action: function ( e, dt, node, config ) {
                         var filterSet = table.$('tr', {selected:true});
-                        var input = maitai_automation_modal.find("input[name='manual_cases']");
-                        input.val('');
+                        var caseInput = maitai_automation_modal.find("input[name='manual_cases']");
+                        var labelInput = maitai_automation_modal.find("input[name='labels']");
+                        caseInput.val('');
+                        labelInput.val('')
                         filterSet.each(function(){
                             var row = table.row(this)
                             var d = row.data();
                             if(!d.need_automation){
-                                input.val(input.val() + " " +d.polarion);
+                                caseInput.val(caseInput.val() + " " +d.polarion);
+                                if(labelInput.val()){
+                                    labelInput.val(labelInput.val() + "," + d.documents.join(","));
+                                } else {
+                                    labelInput.val(d.documents.join(","));
+                                }
                             }
                             else{
-                                alert('Maitai already pending.');
+                                alert('Error: ' + d.polarion + ': Maitai pending.');
                             }
                         });
                         maitai_automation_modal.modal("show");
