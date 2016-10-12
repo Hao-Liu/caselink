@@ -24,7 +24,11 @@ function setup_server()
 
     $SUDO_CMD python ./manage.py loaddata caselink/fixtures/initial_data.yaml
 
-    $SUDO_CMD python ./manage.py loaddata caselink/fixtures/baseline.yaml
+    if [ -f caselink/fixtures/latest.yaml ]; then
+        $SUDO_CMD python ./manage.py loaddata caselink/fixtures/latest.yaml
+    else
+        $SUDO_CMD python ./manage.py loaddata caselink/fixtures/baseline.yaml
+    fi
 
     $SUDO_CMD python ./manage.py manualinit
 }
