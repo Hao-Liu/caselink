@@ -17,3 +17,11 @@ class MaitaiAutomationRequest(forms.Form):
                                  choices=assignee_list, initial=settings.CASELINK_DEFAULT_ASSIGNEE)
     labels = forms.CharField(label='Labels on JIRA, split by space',
                              max_length=1023, required=False)
+
+    def clean(self):
+        cleaned_data = super(MaitaiAutomationRequest, self).clean()
+        labels = cleaned_data.get("labels")
+
+        if " " in labels:
+            msg = "Space not allowed in labels."
+            self.add_error('labels', msg)
