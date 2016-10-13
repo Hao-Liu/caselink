@@ -91,7 +91,7 @@ class WorkItem(models.Model):
     error_related = models.ManyToManyField('self', blank=True)
 
     _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs',
-                 'documents', 'maitai_id')
+                 'documents', 'maitai_id', 'updated', 'errors') #TODO: some errors can be ignored
 
     def __str__(self):
         return self.id
@@ -172,7 +172,8 @@ class AutoCase(models.Model):
 
     #Field used to perform runtime error checking
     #error_related = models.ManyToManyField('self', blank=True)
-    _min_dump = ('id', 'archs', 'framework', 'start_commit', 'end_commit', 'components', )
+    _min_dump = ('id', 'archs', 'framework', 'start_commit', 'end_commit', 'components',
+                 'pr', 'errors')
 
     def get_related(self):
         """Get related objects for error cheking"""
