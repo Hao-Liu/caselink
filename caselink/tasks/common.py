@@ -131,7 +131,7 @@ def restore_all_db(filename):
 @transaction.atomic
 def clean_all_db():
     for model in [
-            Component, Arch, AutoCaseFailure, Bug, CaseLink, WorkItem,
+            Component, Arch, AutoCase, AutoCaseFailure, Bug, CaseLink, WorkItem,
             Document, Project, Framework, Error]:
         model.objects.all().delete()
 
