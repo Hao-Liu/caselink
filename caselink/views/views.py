@@ -1,11 +1,7 @@
 import logging
 
-from django.http import HttpResponse
 from django.http import JsonResponse
-from django.template import RequestContext, loader
-from django.forms.models import model_to_dict
-from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 from django.db import connection
 
 from caselink.form import MaitaiAutomationRequest
@@ -24,9 +20,7 @@ def m2a(request):
 
 
 def index(request):
-    template = loader.get_template('caselink/index.html')
-    context = RequestContext(request, {})
-    return HttpResponse(template.render(context))
+    return render(request, 'caselink/index.html')
 
 
 def data(request):

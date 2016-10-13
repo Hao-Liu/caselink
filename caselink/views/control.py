@@ -2,7 +2,7 @@ import os
 import requests
 from django.conf import settings
 
-from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.http import Http404
 from django.db import IntegrityError, OperationalError, transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -22,7 +22,8 @@ from caselink.form import MaitaiAutomationRequest
 
 import xml.etree.ElementTree as ET
 
-BASE_DIR = 'caselink/backups'
+BASE_DIR = settings.BASE_DIR
+BACKUP_DIR = BASE_DIR + "/caselink/backups"
 
 def _get_tasks():
     workers = inspect(['celery@localhost']).active()
@@ -101,9 +102,9 @@ def _schedule_task(task_name, async_task=True):
 
 def _get_backup_list():
     backup_list = []
-    for file in os.listdir(BASE_DIR):
+    for file in os.listdir(BACKUP_DIR):
         if file.endswith(".yaml"):
-            size = os.path.getsize(BASE_DIR + "/" + file)
+            size = os.path.getsize(BACKUP_DIR + "/" + file)
             backup_list.append({
                 'file': file,
                 'size': size,
@@ -149,22 +150,22 @@ def backup_instance(request, filename=None):
     delete = True if request.GET.get('delete', '') == 'true' else False
     if delete:
         try:
-            os.remove(BASE_DIR + "/" + filename)
+            os.remove(BACKUP_DIR + "/" + filename)
         except OSError:
             raise HttpResponseServerError()
         else:
             return JsonResponse({'message': 'Done'})
 
-    with open(BASE_DIR + "/" + filename) as file:
+    with open(BACKUP_DIR + "/" + filename) as file:
         data = file.read()
     response = HttpResponse(data, content_type='text/plain')
-    response['Content-Length'] = os.path.getsize(BASE_DIR + "/" + filename)
+    response['Content-Length'] = os.path.getsize(BACKUP_DIR + "/" + filename)
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
 
 
 def restore(request, filename=None):
-    clean_and_restore.apply_async((BASE_DIR + "/" + filename,))
+    clean_and_restore.apply_async((BACKUP_DIR + "/" + filename,))
     return JsonResponse({
         'filename': filename,
         'message': 'queued'}
@@ -174,9 +175,9 @@ def restore(request, filename=None):
 def upload(request):
     if request.method == 'POST' and request.FILES['file']:
         i = 0
-        while os.path.exists(BASE_DIR + "/upload-%s.yaml" % i):
+        while os.path.exists(BACKUP_DIR + "/upload-%s.yaml" % i):
             i += 1
-        with open(BASE_DIR + "/upload-%s.yaml" % i, "w+") as fl:
+        with open(BACKUP_DIR + "/upload-%s.yaml" % i, "w+") as fl:
             for chunk in request.FILES['file'].chunks():
                 fl.write(chunk)
         return render_to_response('caselink/popup.html', {'message': 'Upload successful'})
