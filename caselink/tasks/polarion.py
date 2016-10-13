@@ -78,6 +78,22 @@ def load_polarion(project, space):
     return cases
 
 
+def get_history_of_wi(wi_id, project, service=None, start=None):
+    uri = 'subterra:data-service:objects:/default/%s${WorkItem}%s' % (
+        PROJECT, wi_id)
+    if service is None:
+        service = _WorkItem.session.tracker_client.service
+    changes = service.generateHistory(uri)
+    if start:
+        latest_changes = []
+        for change in changes:
+            if change.date > start:
+                latest_changes.append(change)
+        return latest_changes
+    else:
+        return changes
+
+
 def get_automation_of_wi(wi_id):
     """
     Get the automation status of a workitem.
