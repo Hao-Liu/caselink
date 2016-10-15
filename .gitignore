@@ -60,3 +60,5 @@ target/
 caselink/settings_instance.py
 caselink/backups
 caselink/fixtures/latest.yaml
+
+.virtenv/
