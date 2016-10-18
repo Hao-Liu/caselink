@@ -19,9 +19,8 @@ from celery import shared_task, current_task
 from django.db import transaction
 
 PROJECT = 'RedHatEnterpriseLinux7'
-AUTO_SPACE = 'Virt-LibvirtAuto'
-MANUAL_SPACE = 'Virt-LibvirtQE'
-DEFAULT_COMPONENT = 'libvirt'
+SPACES = ['Virt-VirtToolsQE', 'Virt-LibvirtQE']
+DEFAULT_COMPONENT = 'n/a'
 
 
 try:
@@ -32,7 +31,7 @@ except NameError:
         pass
 
 
-def load_polarion(project, space):
+def load_polarion(project, spaces):
     """
     Load all Manual cases with given project and spave, return a dictionary,
     keys are workitem id, values are dicts presenting workitem attributes.
@@ -51,29 +50,30 @@ def load_polarion(project, space):
         return all_cases
 
     doc_dict = {}
-    docs = Document.get_documents(
-        project, space, fields=['document_id', 'title', 'type', 'updated', 'project_id'])
-    for doc_idx, doc in enumerate(docs):
-        if not direct_call:
-            current_task.update_state(state='Fetching documents',
-                                      meta={'current': doc_idx, 'total': len(docs)})
-        obj_doc = OrderedDict([
-            ('title', literal(doc.title)),
-            ('type', literal(doc.type)),
-            ('project', project),
-            ('work_items', OrderedDict()),
-            ('updated', utc.localize(doc.updated)),
-        ])
-        wis = doc.get_work_items(None, True, fields=['work_item_id', 'type', 'title', 'updated'])
-        for wi_idx, wi in enumerate(wis):
-            obj_wi = OrderedDict([
-                ('title', literal(wi.title)),
-                ('type', literal(wi.type)),
+    for space in spaces:
+        docs = Document.get_documents(
+            project, space, fields=['document_id', 'title', 'type', 'updated', 'project_id'])
+        for doc_idx, doc in enumerate(docs):
+            if not direct_call:
+                current_task.update_state(state='Fetching documents',
+                                          meta={'current': doc_idx, 'total': len(docs)})
+            obj_doc = OrderedDict([
+                ('title', literal(doc.title)),
+                ('type', literal(doc.type)),
                 ('project', project),
-                ('updated', utc.localize(wi.updated)),
+                ('work_items', OrderedDict()),
+                ('updated', utc.localize(doc.updated)),
             ])
-            obj_doc['work_items'][literal(wi.work_item_id)] = obj_wi
-        doc_dict[literal(doc.document_id)] = obj_doc
+            wis = doc.get_work_items(None, True, fields=['work_item_id', 'type', 'title', 'updated'])
+            for wi_idx, wi in enumerate(wis):
+                obj_wi = OrderedDict([
+                    ('title', literal(wi.title)),
+                    ('type', literal(wi.type)),
+                    ('project', project),
+                    ('updated', utc.localize(wi.updated)),
+                ])
+                obj_doc['work_items'][literal(wi.work_item_id)] = obj_wi
+            doc_dict[literal(doc.document_id)] = obj_doc
     cases = flatten_cases(doc_dict)
     return cases
 
@@ -120,7 +120,7 @@ def sync_with_polarion():
     if not settings.CASELINK_POLARION['ENABLE']:
         return settings.CASELINK_POLARION['REASON']
 
-    current_polarion_workitems = load_polarion(PROJECT, MANUAL_SPACE)
+    current_polarion_workitems = load_polarion(PROJECT, SPACES)
     current_caselink_workitems = models.WorkItem.objects.all()
     polarion_set = set(current_polarion_workitems.keys())
     caselink_set = set(current_caselink_workitems.values_list('id', flat=True))
@@ -140,7 +140,11 @@ def sync_with_polarion():
             updating_set.discard(wi_id)
 
     # Fetch automation info information
-    for wi_id in creating_set | updating_set:
+    length = len(creating_set | updating_set)
+    for idx, wi_id in enumerate(creating_set | updating_set):
+        if not direct_call:
+            current_task.update_state(state='Fetching detail',
+                                      meta={'current': idx, 'total': length})
         current_polarion_workitems[wi_id]['automation'] = get_automation_of_wi(wi_id)
 
     for wi_id in creating_set:
