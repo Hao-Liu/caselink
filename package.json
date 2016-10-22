@@ -1,0 +1,12 @@
+{
+  "name": "caselink",
+  "version": "1.0.0",
+  "description": "A webservice to manage linkage between autotest cases, manual test cases, and bugs, powered by Django.",
+  "main": "index.js",
+  "private": true,
+  "scripts": {},
+  "dependencies": {
+    "datatables.net": "^1.10.12",
+    "jquery": "^3.1.1"
+  }
+}
