@@ -1,0 +1,8 @@
+PyYAML
+requests
+django
+django-celery
+django-filter
+djangorestframework
+django-crispy-forms
+django-bootstrap-form

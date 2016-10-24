@@ -1,4 +1,6 @@
-from django.db import models
+from django.utils.translation import ugettext_lazy as _
+from django.core.exceptions import ValidationError
+from django.db import transaction, models
 
 
 def test_pattern_match(pattern, casename):
@@ -25,26 +27,30 @@ def test_pattern_match(pattern, casename):
 
 class Error(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
-    message = models.CharField(max_length=255, blank=True)
+    message = models.CharField(max_length=65535, blank=True)
+    _min_dump = ('id', 'message',)
     def __str__(self):
         return self.id + ":" + self.message
 
 
+
 class Arch(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
+    _min_dump = ('name')
     def __str__(self):
         return self.name
 
 
 class Component(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
+    _min_dump = ('name',)
     def __str__(self):
         return self.name
 
 
 class Framework(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
-    components = models.ManyToManyField(Component)
+    _min_dump = ('name', )
     def __str__(self):
         return self.name
 
@@ -52,14 +58,16 @@ class Framework(models.Model):
 class Project(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
+    _min_dump = ('id', 'name',)
     def __str__(self):
         return self.name
 
 
 class Document(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
-    components = models.ManyToManyField(Component)
+    components = models.ManyToManyField(Component, blank=True)
     title = models.CharField(max_length=65535)
+    _min_dump = ('id', 'component', 'title', )
     def __str__(self):
         return self.id
 
@@ -74,14 +82,19 @@ class WorkItem(models.Model):
     archs = models.ManyToManyField(Arch, blank=True, related_name='workitems')
     documents = models.ManyToManyField(Document, blank=True, related_name='workitems')
     errors = models.ManyToManyField(Error, blank=True, related_name='workitems')
-    bugs = models.ManyToManyField('Bug', blank=True, related_name='workitems')
+
+    need_automation = models.BooleanField(default=False)
+    maitai_id = models.CharField(max_length=65535, blank=True)
+    updated = models.DateTimeField(blank=False, auto_now_add=True)
 
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)
 
+    _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs',
+                 'documents', 'maitai_id', 'updated', 'errors') #TODO: some errors can be ignored
+
     def __str__(self):
         return self.id
-
 
     def get_related(self):
         """Get related objects for error cheking"""
@@ -90,7 +103,15 @@ class WorkItem(models.Model):
             list(self.caselinks.all())
         )
 
+    def mark_deleted(self):
+        self.errors.add("WORKITEM_DELETED")
+        self.save()
 
+    def mark_notdeleted(self):
+        self.errors.remove("WORKITEM_DELETED")
+        self.save()
+
+    @transaction.atomic
     def error_check(self, depth=1):
         if depth > 0:
             # error_related may change, so check it first
@@ -98,6 +119,11 @@ class WorkItem(models.Model):
                 item.error_check(depth - 1)
 
         self.error_related.clear()
+
+        deleted = False
+        if self.errors.filter(id="WORKITEM_DELETED").exists():
+            deleted = True
+
         self.errors.clear()
 
         cases_duplicate = WorkItem.objects.filter(title=self.title)
@@ -114,7 +140,7 @@ class WorkItem(models.Model):
             self.errors.add("WORKITEM_MULTI_PATTERN")
 
         if len(links) == 0:
-            if self.automation != 'noautomated':
+            if self.automation not in ['notautomated', 'manualonly']:
                 self.errors.add("WORKITEM_AUTOMATION_INCONSISTENCY")
         else:
             if self.automation != 'automated':
@@ -124,6 +150,8 @@ class WorkItem(models.Model):
                 if link.title != self.title:
                     self.errors.add("WORKITEM_TITLE_INCONSISTENCY")
 
+        if deleted:
+            self.errors.add("WORKITEM_DELETED")
         if depth > 0:
             for item in self.get_related():
                 item.error_check(depth - 1)
@@ -134,16 +162,18 @@ class WorkItem(models.Model):
 class AutoCase(models.Model):
     id = models.CharField(max_length=65535, primary_key=True)
     archs = models.ManyToManyField(Arch, blank=True, related_name='autocases')
+    components = models.ManyToManyField(Component, related_name='autocases', blank=True)
     framework = models.ForeignKey(Framework, null=True, on_delete=models.PROTECT,
                                   related_name='autocases')
-    start_commit = models.CharField(max_length=255, blank=True)
-    end_commit = models.CharField(max_length=255, blank=True)
+    start_commit = models.CharField(max_length=255, blank=True, null=True)
+    end_commit = models.CharField(max_length=255, blank=True, null=True)
+    pr = models.CharField(max_length=255, blank=True, null=True)
     errors = models.ManyToManyField(Error, blank=True, related_name='autocases')
-    bugs = models.ManyToManyField('Bug', blank=True, related_name='autocases')
 
     #Field used to perform runtime error checking
     #error_related = models.ManyToManyField('self', blank=True)
-
+    _min_dump = ('id', 'archs', 'framework', 'start_commit', 'end_commit', 'components',
+                 'pr', 'errors')
 
     def get_related(self):
         """Get related objects for error cheking"""
@@ -151,19 +181,25 @@ class AutoCase(models.Model):
             list(self.caselinks.all())
         )
 
-
     def __str__(self):
         return self.id
-
 
     def autolink(self):
         for link in CaseLink.objects.all():
             if link.test_match(self):
                 link.autocases.add(self)
                 link.save()
+        for link in AutoCaseFailure.objects.all():
+            if link.test_match(self):
+                link.autocases.add(self)
+                link.save()
 
-
+    @transaction.atomic
     def error_check(self, depth=1):
+        #TODO: Use external errors list for prevent certain error from being cleaned.
+        add_in_pr = self.errors.filter(id="AUTOCASE_PR_NOT_MERGED").exists()
+        deleted_in_pr = self.errors.filter(id="AUTOCASE_DELETED_IN_PR").exists()
+
         self.errors.clear()
 
         if len(self.caselinks.all()) < 1:
@@ -176,13 +212,18 @@ class AutoCase(models.Model):
             for item in self.get_related():
                 item.error_check(depth - 1)
 
+        if add_in_pr:
+            self.errors.add("AUTOCASE_PR_NOT_MERGED")
+        if deleted_in_pr:
+            self.errors.add("AUTOCASE_DELETED_IN_PR")
+
         self.save()
 
 
 class CaseLink(models.Model):
-    workitem = models.ForeignKey(WorkItem, on_delete=models.PROTECT, related_name='caselinks')
+    workitem = models.ForeignKey(WorkItem, on_delete=models.PROTECT, null=True, related_name='caselinks')
     autocases = models.ManyToManyField(AutoCase, blank=True, related_name='caselinks')
-    autocase_pattern = models.CharField(max_length=255)
+    autocase_pattern = models.CharField(max_length=65535)
     framework = models.ForeignKey(Framework, on_delete=models.PROTECT, null=True,
                                   related_name='caselinks')
     errors = models.ManyToManyField(Error, blank=True, related_name='caselinks')
@@ -193,9 +234,13 @@ class CaseLink(models.Model):
     # Legacy
     title = models.CharField(max_length=255, blank=True)
 
+    _min_dump = ('workitem', 'autocase_pattern', 'framework', 'title', )
+
+    def __str__(self):
+        return str(self.workitem) + " - " + str(self.autocase_pattern)
+
     class Meta:
         unique_together = ("workitem", "autocase_pattern",)
-
 
     def test_match(self, auto_case):
         """
@@ -203,13 +248,11 @@ class CaseLink(models.Model):
         """
         return test_pattern_match(self.autocase_pattern, auto_case.id)
 
-
     def autolink(self):
         for case in AutoCase.objects.all():
             if self.test_match(case):
                 self.autocases.add(case)
         self.save()
-
 
     def get_related(self):
         """Get related objects for error cheking"""
@@ -219,7 +262,7 @@ class CaseLink(models.Model):
             list(self.autocases.all())
         )
 
-
+    @transaction.atomic
     def error_check(self, depth=1):
         if depth > 0:
             for item in self.error_related.all():
@@ -247,31 +290,53 @@ class CaseLink(models.Model):
 
 
 class Bug(models.Model):
+    """
+    Linked with AutoCase through AutoCasesFailure for better autocase failure matching,
+    Linked with ManualCase directly.
+    """
     id = models.CharField(max_length=255, primary_key=True)
-    # autocase_patterns defined in model BugAutoLink
+    manualcases = models.ManyToManyField('WorkItem', blank=True, related_name='bugs')
+    errors = models.ManyToManyField(Error, blank=True, related_name='bugs')
+    #autocase_failures defined in AutoCaseFailure
 
+    _min_dump = ('id', 'manualcases', )
 
-    def autolink(self):
-        for case in AutoCase.objects.all():
-            for pattern in self.autocase_patterns.all():
-                if pattern.test_match(case):
-                    case.bugs.add(self)
-                    case.save()
+    @property
+    def autocases(self):
+        cases = []
+        for failure in self.autocase_failures.all():
+            cases += failure.autocases.all()
+        return cases
 
+    @transaction.atomic
+    def error_check(self, depth=1):
+        # TODO
+        pass
 
     def __str__(self):
         return self.id
 
 
-# Use a standalone model for bug to auto linkage to make use of autocase pattern
-class BugPattern(models.Model):
-    bug = models.ForeignKey(Bug, related_name='autocase_patterns')
-    autocase_pattern = models.CharField(max_length=255)
+class AutoCaseFailure(models.Model):
+    autocases = models.ManyToManyField(AutoCase, related_name="failures", blank=True)
+    type = models.CharField(max_length=255)
+    framework = models.ForeignKey(Framework, on_delete=models.PROTECT, null=True,
+                                  related_name='autocase_failures')
+    bug = models.ForeignKey('Bug', related_name='autocase_failures', blank=True, null=True)
+    failure_regex = models.CharField(max_length=65535)
+    autocase_pattern = models.CharField(max_length=65535)
+    errors = models.ManyToManyField(Error, blank=True, related_name='autocase_failures')
 
+    _min_dump = ('type', 'framework', 'bug', 'failure_regex', 'autocase_pattern', )
 
     class Meta:
-        unique_together = ("bug", "autocase_pattern",)
+        unique_together = ("failure_regex", "autocase_pattern",)
 
+    def clean(self):
+        if self.type not in ['BUG', 'CASE-UPDATE']:
+            raise ValidationError(_('Unsupported AutoCase Failure Type' + str(self.type)))
+        if self.type == 'BUG' and not self.bug:
+            raise ValidationError(_('Bug id required.'))
 
     def test_match(self, auto_case):
         """
@@ -279,6 +344,16 @@ class BugPattern(models.Model):
         """
         return test_pattern_match(self.autocase_pattern, auto_case.id)
 
+    def autolink(self):
+        for case in AutoCase.objects.all():
+            if self.test_match(case):
+                self.autocases.add(case)
+        self.save()
+
+    @transaction.atomic
+    def error_check(self, depth=1):
+        # TODO
+        pass
 
     def __str__(self):
         return self.autocase_pattern

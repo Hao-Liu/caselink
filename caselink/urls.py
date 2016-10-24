@@ -1,24 +1,64 @@
-from django.conf.urls import url
+"""caselink URL Configuration
 
-from . import views
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/1.8/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
+Including another URLconf
+    1. Add an import:  from blog import urls as blog_urls
+    2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
+"""
+from django.conf.urls import include, url
+from django.contrib import admin
+from rest_framework import routers, serializers, viewsets
+from caselink.views import views, restful, control
 
 urlpatterns = [
+    # Views for nagivation/look up
     url(r'^$', views.index, name='index'),
     url(r'^m2a$', views.m2a, name='m2a'),
     url(r'^a2m$', views.a2m, name='a2m'),
     url(r'^data$', views.data, name='data'),
-    url(r'^control$', views.task_control, name='task_control'),
 
     #RESTful APIs
-    url(r'^manual/$', views.WorkItemList.as_view(), name='workitem'),
-    url(r'^manual/(?P<pk>[a-zA-Z0-9\-]+)/$', views.WorkItemDetail.as_view(), name='workitem_detail'),
-    url(r'^manual/(?P<workitem>[a-zA-Z0-9\-\._]+)/link/$', views.WorkItemLinkageList.as_view(), name='workitem_link_list'),
-    url(r'^manual/(?P<workitem>[a-zA-Z0-9\-\._]+)/link/(?P<pattern>[a-zA-Z0-9\-\.\ _]*)/$', views.WorkItemLinkageDetail.as_view(), name='workitem_link_detail'),
-    url(r'^auto/$', views.AutoCaseList.as_view(), name='auto'),
-    url(r'^auto/(?P<pk>[a-zA-Z0-9\-\._]+)/$', views.AutoCaseDetail.as_view(), name='auto_detail'),
-    url(r'^auto/(?P<autocase>[a-zA-Z0-9\-\._]+)/link/$', views.AutoCaseLinkageList.as_view(), name='auto_link_list'),
-    url(r'^link/$', views.LinkageList.as_view(), name='link'),
-    url(r'^link/(?P<pk>[a-zA-Z0-9\-\._]+)/$', views.LinkageDetail.as_view(), name='link_detail'),
-    url(r'^bug/$', views.BugList.as_view(), name='bug'),
-    url(r'^bug/(?P<pk>[a-zA-Z0-9\-\._]+)/$', views.BugDetail.as_view(), name='bug_detail'),
+    url(r'^manual/$', restful.WorkItemList.as_view(), name='workitem'),
+    url(r'^manual/(?P<pk>[a-zA-Z0-9\-]+)/$', restful.WorkItemDetail.as_view(), name='workitem_detail'),
+    url(r'^manual/(?P<workitem>[a-zA-Z0-9\-\._]+)/link/$', restful.WorkItemLinkageList.as_view(), name='workitem_link_list'),
+    url(r'^manual/(?P<workitem>[a-zA-Z0-9\-\._]+)/link/(?P<pattern>[a-zA-Z0-9\-\.\ _]*)/$', restful.WorkItemLinkageDetail.as_view(), name='workitem_link_detail'),
+
+    url(r'^auto/$', restful.AutoCaseList.as_view(), name='auto'),
+    url(r'^auto/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.AutoCaseDetail.as_view(), name='auto_detail'),
+
+    url(r'^failure/$', restful.AutoCaseFailureList.as_view(), name='auto_failure_list'),
+    url(r'^failure/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.AutoCaseFailureDetail.as_view(), name='auto_failure_detail'),
+
+    url(r'^link/$', restful.LinkageList.as_view(), name='link'),
+    url(r'^link/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.LinkageDetail.as_view(), name='link_detail'),
+
+    url(r'^bug/$', restful.BugList.as_view(), name='bug'),
+    url(r'^bug/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.BugDetail.as_view(), name='bug_detail'),
+
+    url(r'^framework/$', restful.FrameworkList.as_view(), name='framework'),
+    url(r'^framework/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.FrameworkDetail.as_view(), name='framework_detail'),
+
+    url(r'^component/$', restful.ComponentList.as_view(), name='component'),
+    url(r'^component/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.ComponentDetail.as_view(), name='component_detail'),
+
+    url(r'^arch/$', restful.ArchList.as_view(), name='arch'),
+    url(r'^arch/(?P<pk>[a-zA-Z0-9\-\._]+)/$', restful.ArchDetail.as_view(), name='arch_detail'),
+
+    # API for get/start tasks, backup/restore
+    url(r'^control/$', control.overview, name='task_overview'),
+    url(r'^control/task/$', control.task, name='task_list'),
+    url(r'^control/trigger/$', control.trigger, name='task_trigger'),
+    url(r'^control/backup/$', control.backup, name='backup_list'),
+    url(r'^control/backup/(?P<filename>.+\.yaml)$', control.backup_instance, name='backup_download'),
+    url(r'^control/restore/(?P<filename>.+\.yaml)$', control.restore, name='restore'),
+    url(r'^control/upload/$', control.upload, name='upload'),
+    url(r'^control/maitai_request/$', control.create_maitai_request, name='maitai'),
 ]

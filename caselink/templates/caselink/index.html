@@ -3,18 +3,31 @@
     <head>
         <title>{% block title %} CaseLink {% endblock %} </title>
         <script type="text/javascript" charset="utf8" src="//code.jquery.com/jquery-1.10.2.min.js"></script>
-        <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.8/js/jquery.dataTables.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/js-cookie/2.0.4/js.cookie.min.js"></script>
-        <script src="{% static "caselink/searchtable.js" %}"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap.min.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/select/1.2.0/js/dataTables.select.min.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.bootstrap.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.js"></script>
+        <script src="{% static "caselink/datatable_templates.js" %}"></script>
+        <script src="{% static "caselink/caselink.js" %}"></script>
+        <script src="{% static "caselink/index.js" %}"></script>
 
-        <link rel="stylesheet" type="text/css" href="{% static "caselink/datatables.css" %}">
-        <link rel="stylesheet" type="text/css" href="{% static "caselink/caselink.css" %}">
+
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.12/css/dataTables.bootstrap.min.css"></link>
+        <link rel="stylesheet" href="https://cdn.datatables.net/select/1.2.0/css/select.bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.2.2/css/buttons.bootstrap.min.css">
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/googlecode.min.css">
         <link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.core.css" />
         <link rel="stylesheet" href="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.default.css" id="toggleCSS" />
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"></link>
+        <link rel="stylesheet" type="text/css" href="{% static "caselink/datatables.css" %}">
+        <link rel="stylesheet" type="text/css" href="{% static "caselink/index.css" %}">
+        <link rel="stylesheet" type="text/css" href="{% static "caselink/pace.css" %}">
     </head>
     <body>
         <nav class="navbar navbar-default navbar-fixed-top">
@@ -50,15 +63,45 @@
                                 <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
                                 </div>
                             </div>
-                            <div class="alert alert-success loading-proto" role="alert">Loading...</div>
                             <div class="alert alert-success empty-proto" role="alert">There is no running task.</div>
+                        </div>
+                        <div class="panel panel-default" id="backup_list">
+                            <div class="panel-heading">Backup List
+                                <form action="control/upload/" method="post" enctype="multipart/form-data" class="hidden" id="backup_upload_form">
+                                    {% csrf_token %}
+                                    <input type="file" name='file' id="backup_upload_input">
+                                </form>
+                                <a href="javascript:void(0)"><i class="fa fa-upload pull-right backup-upload" aria-hidden="true">&nbspUpload&nbsp</i></a>
+                                <a href="javascript:void(0)"><i class="fa fa-plus pull-right backup-new" aria-hidden="true">&nbspNew&nbsp</i></a>
+                            </div>
+                            <ul class="list-group">
+                                <li class="list-group-item empty-item">No Backup</li>
+                                <li class="list-group-item backup-item">
+                                    <a href="javascript:void(0)"><i class="fa fa-download pull-right backup-download" aria-hidden="true">&nbspDownload&nbsp</i></a>
+                                    <a href="javascript:void(0)"><i class="fa fa-medkit pull-right backup-restore" aria-hidden="true">&nbspRestore&nbsp</i></a>
+                                    <a href="javascript:void(0)"><i class="fa fa-trash pull-right backup-delete" aria-hidden="true">&nbspDelete&nbsp</i></a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="panel panel-default" id="result_list">
+                            <div class="panel-heading">Task results
+                            </div>
+                            <ul class="list-group">
+                                <li class="list-group-item empty-item">No Results</li>
+                                <li class="list-group-item result-item">
+                                    <div class="well">
+                                    </div> </li>
+                            </ul>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger">Cancel All Tasks</button>
-                        <button type="button" class="btn btn-info btn-op btn-auto-error">Autocase Error Check</button>
-                        <button type="button" class="btn btn-info btn-op btn-manual-error">Manualcase Error Check</button>
-                        <button type="button" class="btn btn-info btn-op btn-linkage-error">Linkage Error Check</button>
+                        <button type="button" class="btn btn-info btn-op btn-auto-error">Autocase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
+                        <button type="button" class="btn btn-info btn-op btn-manual-error">Manualcase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
+                        <button type="button" class="btn btn-info btn-op btn-linkage-error">Linkage Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
+                        <button type="button" class="btn btn-info btn-op btn-sync-polarion">Sync with Polarion<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
+                        <br>
+                        <br>
+                        <button type="button" class="btn btn-danger btn-cancel">Cancel All Tasks<i class="fa fa-fw fa-close" aria-hidden="true"></i></button>
                     </div>
                 </div><!-- /.modal-content -->
             </div>
@@ -85,74 +128,6 @@
             </div>
             {% endblock %}
         </div>
-        <script src="http://fabien-d.github.io/alertify.js/assets/js/lib/alertify/alertify.min.js"></script>
-        <script>
-            var polling = false;
-            $(document).ready(function() {
-                var task_progress = $("#task_progress");
-                var progress_bar = $("#task_progress .progress-bar-proto").detach();
-                var loading = $("#task_progress .loading-proto");
-                var empty = $("#task_progress .empty-proto").detach();
-                $('#task_panel').on('hidden.bs.modal', function (e) {
-                    polling = false;
-                })
-                $('#task_panel').on('show.bs.modal', function (e) {
-                    polling = true;
-                    poll_tasks();
-                })
-
-                function gen_progress_bar(cur, total){
-                    bar = progress_bar.clone();
-                    progress = bar.find(".progress-bar");
-                    percent = (cur/total) * 100.0;
-
-                    progress.text("" + cur + "/" + total + "");
-                    progress
-                    .attr("aria-valuenow", cur)
-                    .attr("aria-valuemax", total)
-                    .attr("aria-valuemin", 0)
-                    .css("min-width", "6em")
-                    .css("width", "" + percent + "%");
-
-                    return bar
-                }
-
-                function op_trigger(url){
-                    $.ajax({
-                        'url':url,
-                        'cache': false
-                    }).done(function(data){
-                        alert(data.message);
-                    });
-                }
-
-                $(".btn-auto-error").click(function(){ op_trigger('control?async=true&trigger=autocase_error_check'); });
-                $(".btn-manual-error").click(function(){ op_trigger('control?async=true&trigger=manualcase_error_check'); });
-                $(".btn-linkage-error").click(function(){ op_trigger('control?async=true&trigger=linkage_error_check'); });
-
-                function poll_tasks(){
-                    $.ajax({
-                        'url':'control',
-                        'cache': false
-                    })
-                    .done(function(data){
-                        loading.remove();
-                        task_progress.empty()
-                        if($.isEmptyObject(data))
-                            task_progress.append(empty);
-                        for(i in data){
-                            task_progress.append("<h3>"+i+"</h3>");
-                            if(data[i].meta){
-                                cur = data[i].meta.current;
-                                total = data[i].meta.total;
-                                task_progress.append(gen_progress_bar(cur,total));
-                            }
-                        }
-                    });
-                    if(polling)
-                        setTimeout(poll_tasks, 1000);
-                }
-            });
-        </script>
+        <script src="{% static "caselink/js/index.js" %}" type="text/javascript" charset="utf-8"></script>
     </body>
 </html>
