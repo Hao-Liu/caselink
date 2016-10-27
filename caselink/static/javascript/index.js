@@ -1,4 +1,5 @@
 var polling = false;
+var prettier = require('./lib/prettier.js');
 $(document).ready(function() {
   var task_progress = $("#task_progress");
   var progress_bar = $("#task_progress .progress-bar-proto").detach();

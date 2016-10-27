@@ -1,3 +1,4 @@
+var prettier = require('./lib/prettier.js');
 $(document).ready(function() {
   var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
   var linkage_modal = $('#linkage_modal');
