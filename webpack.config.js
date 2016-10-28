@@ -5,7 +5,7 @@ module.exports = {
     // The script that will load before page loaded.
     head: './pack/pace.js',
     // Common lib
-    libs: ['jquery', 'bootstrap-webpack', 'font-awesome-webpack', './pack/datatables.js'],
+    include: ['jquery', 'bootstrap-webpack', 'font-awesome-webpack', './pack/datatables.js'],
     // Pages
     a2m: './a2m.js',
     m2a: './m2a.js',
@@ -41,7 +41,8 @@ module.exports = {
     new webpack.optimize.CommonsChunkPlugin({
       name: "common",
       filename: "common.js",
-      chunks: ['libs', 'a2m', 'm2a', 'index']
+      // all below chunks jquery, hence jquery is included in common.js
+      chunks: ['include', 'a2m', 'm2a', 'index']
     }),
   ]
 };

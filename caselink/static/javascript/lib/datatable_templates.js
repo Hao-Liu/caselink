@@ -11,7 +11,6 @@
   }
 }(this, function($){
   'use strict';
-  console.log("execute");
   function DataSearchTable(param){
     // Setup - First add a text input to each footer cell
     var that = this
