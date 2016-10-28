@@ -1,5 +1,6 @@
 var prettier = require('./lib/prettier.js');
 $(document).ready(function() {
+  require("./lib/datatable_templates.js")
   var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
   var linkage_modal = $('#linkage_modal');
   var linkage_list_item = $('.linkage-list-item').detach();
@@ -114,7 +115,7 @@ $(document).ready(function() {
     select: {
       style: 'single'
     },
-    BaseTable: [DataTableWithChildRow, DataTableWithInlineButton,],
+    BaseTable: [$.fn.DataTableWithChildRow, $.fn.DataTableWithInlineButton,],
     buttons: [
       {
         text: 'Edit Linkage',

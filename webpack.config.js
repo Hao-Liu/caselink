@@ -5,7 +5,7 @@ module.exports = {
     // The script that will load before page loaded.
     head: './pack/pace.js',
     // Common lib
-    include: ['jquery', 'bootstrap-webpack', 'font-awesome-webpack', './pack/datatables.js'],
+    include: ['jquery', 'bootstrap-webpack', 'font-awesome-webpack', './pack/datatables.js', './pack/style.js'],
     // Pages
     a2m: './a2m.js',
     m2a: './m2a.js',

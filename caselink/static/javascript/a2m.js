@@ -1,5 +1,6 @@
 var prettier = require('./lib/prettier.js');
 $(document).ready(function() {
+  require("./lib/datatable_templates.js")
   var table = $('#sortable-table').DataSearchTable( {
     "ajax": "data?type=a2m",
     "iDisplayLength": 20,

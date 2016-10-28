@@ -100,7 +100,7 @@
     }
     var BaseTable = param.BaseTable || this.DataTable;
     if (BaseTable instanceof Array){
-      Base = param.BaseTable.shift();
+      var Base = param.BaseTable.shift();
       if(param.BaseTable.length == 0)
         param.BaseTable = null;
       return Base.apply(this, [param]);
@@ -112,7 +112,7 @@
     param.dom = '<<"row" <"col-md-2"l><"col-md-6"B><"col-md-4"f>>r<t><"row"<"col-md-6"i><"col-md-6"p>>>';
     var BaseTable = param.BaseTable || this.DataTable;
     if (BaseTable instanceof Array){
-      Base = param.BaseTable.shift();
+      var Base = param.BaseTable.shift();
       if(param.BaseTable.length == 0)
         param.BaseTable = null;
       return Base.apply(this, [param])
@@ -177,7 +177,7 @@
     }
     var BaseTable = param.BaseTable || this.DataTable;
     if (BaseTable instanceof Array){
-      Base = param.BaseTable.shift();
+      var Base = param.BaseTable.shift();
       if(param.BaseTable.length == 0)
         param.BaseTable = null;
       return Base.apply(this, [param])
@@ -187,7 +187,9 @@
 
   $.fn.extend({
     DataSearchTable: DataSearchTable,
-    DataTableWithChildRow, DataTableWithChildRow,
-    DataTableWithInlineButton, DataTableWithInlineButton,
+    DataTableWithChildRow: DataTableWithChildRow,
+    DataTableWithInlineButton: DataTableWithInlineButton,
   });
+
+  console.log("Loaded.");
 });
