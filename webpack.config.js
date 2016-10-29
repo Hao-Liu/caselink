@@ -2,11 +2,13 @@ var webpack = require('webpack')
 module.exports = {
   context: __dirname + "/caselink/static/javascript",
   entry: {
-    // The script that will load before page loaded.
+    // Vendors
+    vendor: ['jquery', 'bootstrap-webpack', 'font-awesome-webpack', './pack/datatables.js', './pack/style.js'],
+    // The script that will load before any page content loaded.
     head: './pack/pace.js',
-    // Common lib
-    include: ['jquery', 'bootstrap-webpack', 'font-awesome-webpack', './pack/datatables.js', './pack/style.js'],
-    // Pages
+    // Initial Script for all page.
+    init: ['./pack/style.js'],
+    // Page specified entry.
     a2m: './a2m.js',
     m2a: './m2a.js',
     index: './index.js',
@@ -25,25 +27,22 @@ module.exports = {
       { test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=image/svg+xml' },
       // Style
       { test: /\.css$/, loader: "style!css" },
-      // jQuery
-      { test: "jquery", loader: "expose?$!expose?jQuery" },
-      // HACK
+      // HACK, pace-progress have a broken AMD definetion, disable "define" variable can disable AMD, force use CommonJS.
       { test: require.resolve("pace-progress"), loader: "imports?define=>false" },
     ]
   },
   plugins: [
-    // with the jQuery loader and externals above,
-    // $, jQuery and jquery is external and available everywhere
+    // ProvidePlugin make sure if "$" or "jQuery" is used in a module,
+    // jquery is auto loaded as a dependency.
+    // CommonChuckPlugin("vendor", ...) bundle all modules in "vendor" entry defined above
+    // in a common bundle, when any of them are required, it will be imported from that bundle,
+    // and HTML templates/pages should alway load this common bundle before any other
+    // module may need it.
     new webpack.ProvidePlugin({
       $: "jquery",
       jQuery: "jquery",
       "window.jQuery": "jquery"
     }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: "common",
-      filename: "common.js",
-      // all below chunks jquery, hence jquery is included in common.js
-      chunks: ['include', 'a2m', 'm2a', 'index']
-    }),
+    new webpack.optimize.CommonsChunkPlugin("vendor", "vendor.bundle.js"),
   ]
 };
