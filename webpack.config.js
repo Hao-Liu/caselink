@@ -19,6 +19,13 @@ module.exports = {
     filename: "[name].js"
   },
   module: {
+    preLoaders: [
+      {
+        test: /\.js$/, // include .js files
+        exclude: /node_modules/, // exclude any and all files in the node_modules folder
+        loader: "jshint"
+      }
+    ],
     loaders: [
       // BS FA Fonts
       { test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=10000&mimetype=application/font-woff' },
@@ -29,7 +36,21 @@ module.exports = {
       { test: /\.css$/, loader: "style!css" },
       // HACK, pace-progress have a broken AMD definetion, disable "define" variable can disable AMD, force use CommonJS.
       { test: require.resolve("pace-progress"), loader: "imports?define=>false" },
+      // babel
+      {
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        loader: 'babel', // 'babel-loader' is also a valid name to reference
+        query: {
+          presets: ['es2015']
+        }
+      }
     ]
+  },
+  jshint: {
+    camelcase: false,
+    emitErrors: false,
+    failOnHint: false,
   },
   plugins: [
     // ProvidePlugin make sure if "$" or "jQuery" is used in a module,
