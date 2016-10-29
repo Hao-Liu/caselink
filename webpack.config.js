@@ -13,6 +13,7 @@ module.exports = {
   },
   output: {
     path: __dirname + '/caselink/static/dist/',
+    publicPath: '/static/dist/',
     filename: "[name].js"
   },
   module: {
