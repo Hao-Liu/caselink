@@ -1,6 +1,6 @@
 var prettier = require('./lib/prettier.js');
 $(document).ready(function() {
-  require("./lib/datatable_templates.js")
+  require("./lib/datatable_templates.js");
   var table = $('#sortable-table').DataSearchTable( {
     "ajax": "data?type=a2m",
     "iDisplayLength": 20,
@@ -32,10 +32,10 @@ $(document).ready(function() {
       {
         "data": "polarion",
         "render": function(data) {
-          link = ""
-          for (i in data){
-            polarion_id = data[i];
-            link += '<a href="https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id='+polarion_id+'">'+polarion_id+'</a><br>';
+          link = "";
+          for (var i in data){
+            var polarionId = data[i];
+            link += '<a href="https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id='+polarionId+'">'+polarionId+'</a><br>';
           }
           return link;
         }

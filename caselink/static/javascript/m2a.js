@@ -1,6 +1,6 @@
 var prettier = require('./lib/prettier.js');
 $(document).ready(function() {
-  require("./lib/datatable_templates.js")
+  require("./lib/datatable_templates.js");
   var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
   var linkage_modal = $('#linkage_modal');
   var linkage_list_item = $('.linkage-list-item').detach();
@@ -15,7 +15,7 @@ $(document).ready(function() {
   });
 
   linkage_modal.on("click", "#linkage_save", function(){
-    var button = $(this)
+    var button = $(this);
     button.prop('disabled', true);
     var promises = [];
     var deleted = linkage_modal.data('deleted');
@@ -33,7 +33,7 @@ $(document).ready(function() {
         autocase_pattern: ele.find("#linkage_pattern").val(),
         framework: ele.find("#linkage_framework").val(),
         title: ele.find("#linkage_title").val(),
-      }
+      };
       if(ele.data('status') == 'exists'){
         console.log('PUT', '/link/' + ele.data('linkage').id + "/", JSON.stringify(data))
         promises.push($.ajax({
@@ -44,7 +44,7 @@ $(document).ready(function() {
         }));
       }
       if(ele.data('status') == 'new'){
-        console.log('POST', '/link/', JSON.stringify(data))
+        console.log('POST', '/link/', JSON.stringify(data));
         promises.push($.ajax({
           contentType: "application/json; charset=utf-8",
           method: 'POST',
