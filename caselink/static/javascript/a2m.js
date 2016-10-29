@@ -1,6 +1,6 @@
-var prettier = require('./lib/prettier.js');
+require("./lib/datatables-templates.js");
+var htmlify = require('./lib/htmlify.js');
 $(document).ready(function() {
-  require("./lib/datatable_templates.js");
   var table = $('#sortable-table').DataSearchTable( {
     "ajax": "data?type=a2m",
     "iDisplayLength": 20,
@@ -8,23 +8,23 @@ $(document).ready(function() {
     "selectorColumns": [
       {
         column: 'Component',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'Framework',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'Documents',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'PR',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'Errors',
-        render: prettier,
+        render: htmlify,
       }
     ],
     "columns": [
@@ -32,7 +32,7 @@ $(document).ready(function() {
       {
         "data": "polarion",
         "render": function(data) {
-          link = "";
+          var link = "";
           for (var i in data){
             var polarionId = data[i];
             link += '<a href="https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id='+polarionId+'">'+polarionId+'</a><br>';
@@ -43,19 +43,19 @@ $(document).ready(function() {
       {
         "data": "title",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('<br>'));
         }
       },
       {
         "data": "documents",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('<br>'));
         }
       },
       {
         "data": "components",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('<br>'));
         }
       },
       {
@@ -63,12 +63,12 @@ $(document).ready(function() {
       },
       {
         "data": "pr",
-        "render":  prettier
+        "render":  htmlify
       },
       {
         "data": "errors",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('<br>'));
         }
       },
     ],

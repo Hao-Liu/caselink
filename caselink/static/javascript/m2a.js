@@ -1,6 +1,6 @@
-var prettier = require('./lib/prettier.js');
+require("./lib/datatables-templates.js");
+var htmlify = require('./lib/htmlify.js');
 $(document).ready(function() {
-  require("./lib/datatable_templates.js");
   var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
   var linkage_modal = $('#linkage_modal');
   var linkage_list_item = $('.linkage-list-item').detach();
@@ -26,7 +26,7 @@ $(document).ready(function() {
       );
     }
     var items = linkage_modal.find('.linkage-list-item');
-    for(var i = 0; i < items.length; i++){
+    for(let i = 0; i < items.length; i++){
       var ele = $(items[i]);
       var data = {
         workitem: linkage_modal.find('#linkage_manualcase').val(),
@@ -35,7 +35,7 @@ $(document).ready(function() {
         title: ele.find("#linkage_title").val(),
       };
       if(ele.data('status') == 'exists'){
-        console.log('PUT', '/link/' + ele.data('linkage').id + "/", JSON.stringify(data))
+        console.log('PUT', '/link/' + ele.data('linkage').id + "/", JSON.stringify(data));
         promises.push($.ajax({
           contentType: "application/json; charset=utf-8",
           method: 'PUT',
@@ -57,11 +57,11 @@ $(document).ready(function() {
     $.when.apply($, promises).then(function(schemas) {
       linkage_modal.modal('hide');
     }, function(e) {
-      alert("Failed to save the linkage data.")
+      alert("Failed to save the linkage data.");
     }).always(function(){
       button.prop('disabled', false);
       $.get('data?pk=' + linkage_modal.find('#linkage_manualcase').val())
-        .done(function(data){linkage_modal.data('row').data(data.data[0]).draw()});
+        .done(function(data){linkage_modal.data('row').data(data.data[0]).draw();});
     });
   });
   linkage_modal.on("click", "#linkage_delete", function(){
@@ -73,16 +73,20 @@ $(document).ready(function() {
   });
 
   $("#maitai_automation_submit").click(function(){
-    var button = $(this)
+    var button = $(this);
     var form = maitai_automation_modal.find('form');
     var posting = $.post("/control/maitai_request/", form.serialize());
     button.prop('disabled', true);
+    var polarion;
+    var rowSelector = function(idx, data, node){
+        return data.polarion == polarion;
+    };
     posting.done(function(data){
-      for(var polarion in data){
+      for(polarion in data){
         var maitai_id = data[polarion].maitai_id;
         var message = data[polarion].message;
         if(maitai_id){
-          var row = table.row(function(idx, data, node){return data.polarion == polarion;});
+          var row = table.row(rowSelector);
           var d = row.data();
           d.maitai_id = maitai_id;
           table.row(row).data(d).draw(false);
@@ -94,7 +98,7 @@ $(document).ready(function() {
       }
     }).fail(function(jqXHR, textStauts){
       try{
-        var data = JSON.stringify(jqXHR.responseText)
+        var data = JSON.stringify(jqXHR.responseText);
         if(data.message){
           alert('Ajax failure: ' + data.message);
         }
@@ -124,7 +128,7 @@ $(document).ready(function() {
           filterSet.each(function(){
             //with select: single, only one row is processed.
             var d = table.row(this).data();
-            var linkage_list = linkage_modal.find('#linkage_list').empty()
+            var linkage_list = linkage_modal.find('#linkage_list').empty();
             linkage_modal.data('deleted', []);
             linkage_modal.data('row', table.row(this));
             $.get("/manual/" + d.polarion + "/link/").done(function(data){
@@ -141,7 +145,7 @@ $(document).ready(function() {
             });
             linkage_modal.find('#linkage_manualcase').val(d.polarion).prop('disabled', true);
             linkage_modal.modal('show');
-          })
+          });
         }
       },
       {
@@ -151,9 +155,9 @@ $(document).ready(function() {
           var caseInput = maitai_automation_modal.find("input[name='manual_cases']");
           var labelInput = maitai_automation_modal.find("input[name='labels']");
           caseInput.val('');
-          labelInput.val('')
+          labelInput.val('');
           filterSet.each(function(){
-            var row = table.row(this)
+            var row = table.row(this);
             var d = row.data();
             if(!d.need_automation){
               caseInput.val(caseInput.val() + " " +d.polarion);
@@ -194,16 +198,16 @@ $(document).ready(function() {
     "selectorColumns": [
       {
         column: 'Documents',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'Automation',
-        render: prettier,
+        render: htmlify,
         strict: true,
       },
       {
         column: 'Errors',
-        render: prettier,
+        render: htmlify,
       },
     ],
     "columns": [
@@ -217,34 +221,34 @@ $(document).ready(function() {
       {
         "data": "documents",
         "render": function( data ) {
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('<br>'));
         }
       },
       { "data": "automation" },
       {
         "data": "errors",
         "render": function( data ) {
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('<br>'));
         }
       },
       {
         "data": "cases",
         "visible": false,
-        "render": prettier,
+        "render": htmlify,
       },
       {
         "data": "patterns",
         "visible": false,
-        "render": prettier,
+        "render": htmlify,
       },
       {
         "data": "maitai_id",
-        "render": prettier,
+        "render": htmlify,
       },
       {
         "data": "need_automation",
         "visible": false,
-        "render": prettier,
+        "render": htmlify,
       },
 
     ],
@@ -256,35 +260,35 @@ $(document).ready(function() {
 
     // Add event listener for opening and closing details
     childContent: function(row, child, slideDown, slideUp){
-      var head = child_detail.clone()
+      var head = child_detail.clone();
       var d = row.data();
 
       if(d.cases.length > 0){
-        head.find(".detail-autocase").html(d.cases.join("<br>"))
+        head.find(".detail-autocase").html(d.cases.join("<br>"));
       }
       else{
-        head.find(".detail-autocase").closest("tr").remove()
+        head.find(".detail-autocase").closest("tr").remove();
       }
 
       if(d.errors.length > 0){
-        head.find(".detail-error").html(d.errors.join("<br>"))
+        head.find(".detail-error").html(d.errors.join("<br>"));
       }
       else{
-        head.find(".detail-error").closest("tr").remove()
+        head.find(".detail-error").closest("tr").remove();
       }
 
       if(d.patterns.length > 0){
-        head.find(".detail-pattern").html(d.patterns.join("<br>"))
+        head.find(".detail-pattern").html(d.patterns.join("<br>"));
       }
       else{
-        head.find(".detail-pattern").closest("tr").remove()
+        head.find(".detail-pattern").closest("tr").remove();
       }
 
       if(d.maitai_id){
-        head.find(".detail-maitai").html(d.maitai_id)
+        head.find(".detail-maitai").html(d.maitai_id);
       }
       else{
-        head.find(".detail-maitai").closest("tr").remove()
+        head.find(".detail-maitai").closest("tr").remove();
       }
 
       if (d.patterns.length + d.errors.length + d.cases.length === 0 && !d.maitai_id) {
