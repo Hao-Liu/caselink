@@ -1,6 +1,7 @@
 require("./lib/datatables-templates.js");
 var htmlify = require('./lib/htmlify.js');
 $(document).ready(function() {
+  "use strict";
   var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
   var linkage_modal = $('#linkage_modal');
   var linkage_list_item = $('.linkage-list-item').detach();

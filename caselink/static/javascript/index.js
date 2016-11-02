@@ -1,6 +1,7 @@
 var polling = false;
 var htmlify = require('./lib/htmlify.js');
 $(document).ready(function() {
+  "use strict";
   var task_progress = $("#task_progress");
   var progress_bar = $("#task_progress .progress-bar-proto").detach();
   var empty_task = $("#task_progress .empty-proto");
@@ -23,9 +24,9 @@ $(document).ready(function() {
   });
 
   function gen_progress_bar(cur, total, text){
-    var bar = progress_bar.clone();
-    progress = bar.find(".progress-bar");
-    percent = (cur/total) * 100.0;
+    let bar = progress_bar.clone();
+    let progress = bar.find(".progress-bar");
+    let percent = (cur/total) * 100.0;
 
     if(text){
       progress.text(text);
@@ -66,16 +67,16 @@ $(document).ready(function() {
     $('#backup_upload_form').submit();
   });
   $("#backup_list .list-group").on('click', '.backup-download', function(){
-    yaml = $(this).closest('li').clone().children().remove().end().text().trim();
+    let yaml = $(this).closest('li').clone().children().remove().end().text().trim();
     top.location.href = 'control/backup/' + yaml;
     console.log( 'control/backup/' + yaml);
   });
   $("#backup_list .list-group").on('click', '.backup-restore', function(){
-    yaml = $(this).closest('li').clone().children().remove().end().text().trim();
+    let yaml = $(this).closest('li').clone().children().remove().end().text().trim();
     ajax_with_alert('control/restore/'+ yaml);
   });
   $("#backup_list .list-group").on('click', '.backup-delete', function(){
-    yaml = $(this).closest('li').clone().children().remove().end().text().trim();
+    let yaml = $(this).closest('li').clone().children().remove().end().text().trim();
     ajax_with_alert('control/backup/'+ yaml + '?delete=true');
   });
 
@@ -95,8 +96,8 @@ $(document).ready(function() {
           console.log(data.task[i]);
           task_progress.append("<h3>"+i+"</h3>");
           if(data.task[i].meta){
-            cur = data.task[i].meta.current;
-            total = data.task[i].meta.total;
+            let cur = data.task[i].meta.current;
+            let total = data.task[i].meta.total;
             task_progress.append(gen_progress_bar(cur,total));
           }
           else{
@@ -135,4 +136,3 @@ $(document).ready(function() {
       setTimeout(poll_status, 1000);
   }
 });
-

@@ -1,6 +1,7 @@
 require("./lib/datatables-templates.js");
 var htmlify = require('./lib/htmlify.js');
 $(document).ready(function() {
+  "use strict";
   var table = $('#sortable-table').DataSearchTable( {
     "ajax": "data?type=a2m",
     "iDisplayLength": 20,
