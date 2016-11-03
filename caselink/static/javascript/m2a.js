@@ -68,7 +68,9 @@ $(document).ready(function() {
   linkage_modal.on("click", "#linkage_delete", function(){
     var linkage_item = $(this).closest(".linkage-list-item");
     var deleted = linkage_modal.data('deleted');
-    deleted.push(linkage_item.data('linkage'));
+    if (linkage_item.data('linkage') && linkage_item.data('linkage').id) {
+        deleted.push(linkage_item.data('linkage'));
+    }
     linkage_modal.data('deleted', deleted);
     linkage_item.remove();
   });
