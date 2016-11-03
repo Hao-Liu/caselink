@@ -117,9 +117,7 @@ $(document).ready(function() {
   });
 
   var table = $('#sortable-table').DataSearchTable({
-    select: {
-      style: 'single'
-    },
+    select: true,
     BaseTable: [$.fn.DataTableWithChildRow, $.fn.DataTableWithInlineButton,],
     buttons: [
       {
