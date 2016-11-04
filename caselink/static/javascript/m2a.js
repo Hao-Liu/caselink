@@ -1,5 +1,6 @@
 require("./lib/datatables-templates.js");
 var htmlify = require('./lib/htmlify.js');
+
 $(document).ready(function() {
   "use strict";
   var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
@@ -17,16 +18,20 @@ $(document).ready(function() {
 
   linkage_modal.on("click", "#linkage_save", function(){
     var button = $(this);
-    button.prop('disabled', true);
     var promises = [];
     var deleted = linkage_modal.data('deleted');
+
+    button.prop('disabled', true);
+
     for(var i = 0; i < deleted.length; i++){
       console.log({method: 'DELETE', url:'/link/' + deleted[i].id + "/"});
       promises.push(
         $.ajax({method: 'DELETE', url:'/link/' + deleted[i].id + "/"})
       );
     }
+
     var items = linkage_modal.find('.linkage-list-item');
+
     for(let i = 0; i < items.length; i++){
       var ele = $(items[i]);
       var data = {
@@ -65,6 +70,7 @@ $(document).ready(function() {
         .done(function(data){linkage_modal.data('row').data(data.data[0]).draw();});
     });
   });
+
   linkage_modal.on("click", "#linkage_delete", function(){
     var linkage_item = $(this).closest(".linkage-list-item");
     var deleted = linkage_modal.data('deleted');
@@ -126,6 +132,10 @@ $(document).ready(function() {
         text: 'Edit Linkage',
         action: function ( e, dt, node, config ) {
           var filterSet = table.$('tr', {selected:true});
+          if(filterSet.length > 1){
+            alert("Linkage edit with multi-select is not supported yet.");
+            return;
+          }
           filterSet.each(function(){
             //with select: single, only one row is processed.
             var d = table.row(this).data();
@@ -155,15 +165,26 @@ $(document).ready(function() {
           var filterSet = table.$('tr', {selected:true});
           var caseInput = maitai_automation_modal.find("input[name='manual_cases']");
           var labelInput = maitai_automation_modal.find("input[name='labels']");
+          var checkFlag = true;
           caseInput.val('');
           labelInput.val('');
+          var count = filterSet.length;
           filterSet.each(function(){
             var row = table.row(this);
             var d = row.data();
+            if(d.automation !== "notautomated"){
+              alert("Create automation request for a " + d.automation + " is not allowed.");
+              checkFlag = false;
+              return;
+            }
             if(!d.need_automation){
               caseInput.val(caseInput.val() + " " +d.polarion);
               if(labelInput.val()){
-                labelInput.val(labelInput.val() + "," + d.documents.join(","));
+                for(let docName of d.documents){
+                  if(labelInput.val().indexOf(docName) === -1){
+                    labelInput.val(labelInput.val() + "," + docName);
+                  }
+                }
               } else {
                 labelInput.val(d.documents.join(","));
               }
@@ -171,8 +192,10 @@ $(document).ready(function() {
             else{
               alert('Error: ' + d.polarion + ': Maitai pending.');
             }
+            if(!--count && checkFlag){
+              maitai_automation_modal.modal("show");
+            }
           });
-          maitai_automation_modal.modal("show");
         }
       },
 
@@ -222,14 +245,14 @@ $(document).ready(function() {
       {
         "data": "documents",
         "render": function( data ) {
-          return htmlify(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       { "data": "automation" },
       {
         "data": "errors",
         "render": function( data ) {
-          return htmlify(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       {
