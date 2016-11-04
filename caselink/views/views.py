@@ -45,13 +45,14 @@ def data(request):
         caselink_autocase.id AS "case",
         caselink_autocase.pr AS "pr",
         caselink_autocase.framework_id AS "framework",
-        caselink_linkage.title as "title",
+        caselink_workitem.title as "title",
         caselink_linkage.workitem_id as "polarion"
         from
-        ((
+        (((
         caselink_autocase
         left join caselink_linkage_autocases on caselink_autocase.id = caselink_linkage_autocases.autocase_id)
         left join caselink_linkage on caselink_linkage_autocases.linkage_id = caselink_linkage.id)
+        left join caselink_workitem on caselink_linkage.workitem_id = caselink_workitem.id)
         order by "case"
         """
         cursor.execute(sql)

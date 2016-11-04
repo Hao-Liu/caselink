@@ -38,7 +38,6 @@ $(document).ready(function() {
         workitem: linkage_modal.find('#linkage_manualcase').val(),
         autocase_pattern: ele.find("#linkage_pattern").val(),
         framework: ele.find("#linkage_framework").val(),
-        title: ele.find("#linkage_title").val(),
       };
       if(ele.data('status') == 'exists'){
         console.log('PUT', '/link/' + ele.data('linkage').id + "/", JSON.stringify(data));
@@ -156,7 +155,6 @@ $(document).ready(function() {
                 var new_item = linkage_list_item.clone();
                 new_item.find("#linkage_pattern").val(ele.autocase_pattern);
                 new_item.find("#linkage_framework").val(ele.framework);
-                new_item.find("#linkage_title").val(ele.title);
                 new_item.find("#linkage_autocases").html(ele.autocases.join("<br>"));
                 new_item.data('linkage', ele);
                 new_item.data('status', 'exists');

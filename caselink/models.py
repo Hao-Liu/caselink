@@ -146,10 +146,6 @@ class WorkItem(models.Model):
             if self.automation != 'automated':
                 self.errors.add("WORKITEM_AUTOMATION_INCONSISTENCY")
 
-            for link in links:
-                if link.title != self.title:
-                    self.errors.add("WORKITEM_TITLE_INCONSISTENCY")
-
         if deleted:
             self.errors.add("WORKITEM_DELETED")
         if depth > 0:
@@ -231,10 +227,7 @@ class Linkage(models.Model):
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)
 
-    # Legacy
-    title = models.CharField(max_length=255, blank=True)
-
-    _min_dump = ('workitem', 'autocase_pattern', 'framework', 'title', )
+    _min_dump = ('workitem', 'autocase_pattern', 'framework', )
 
     def __str__(self):
         return str(self.workitem) + " - " + str(self.autocase_pattern)
