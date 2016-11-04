@@ -179,14 +179,11 @@ $(document).ready(function() {
             }
             if(!d.need_automation){
               caseInput.val(caseInput.val() + " " +d.polarion);
-              if(labelInput.val()){
-                for(let docName of d.documents){
-                  if(labelInput.val().indexOf(docName) === -1){
-                    labelInput.val(labelInput.val() + "," + docName);
-                  }
+              for(let docName of d.documents){
+                docName = docName.replace(/\ /g, "");
+                if(labelInput.val().indexOf(docName) === -1){
+                  labelInput.val((labelInput.val()? "," : "") + docName);
                 }
-              } else {
-                labelInput.val(d.documents.join(","));
               }
             }
             else{
