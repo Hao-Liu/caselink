@@ -129,6 +129,15 @@ $(document).ready(function() {
     BaseTable: [$.fn.DataTableWithChildRow, $.fn.DataTableWithInlineButton,],
     buttons: [
       {
+        text: 'Select All Filted',
+        action: function ( e, dt, node, config ) {
+          var filterSet = table.$('tr', {filter:'applied'});
+          filterSet.each(function(){
+            table.row(this).select();
+          });
+        }
+      },
+      {
         text: 'Edit Linkage',
         action: function ( e, dt, node, config ) {
           var filterSet = table.$('tr', {selected:true});
