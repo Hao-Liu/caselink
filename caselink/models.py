@@ -134,7 +134,7 @@ class WorkItem(models.Model):
                     continue
                 self.error_related.add(case)
 
-        links = CaseLink.objects.filter(workitem=self)
+        links = Linkage.objects.filter(workitem=self)
 
         if len(links) > 1:
             self.errors.add("WORKITEM_MULTI_PATTERN")
@@ -185,7 +185,7 @@ class AutoCase(models.Model):
         return self.id
 
     def autolink(self):
-        for link in CaseLink.objects.all():
+        for link in Linkage.objects.all():
             if link.test_match(self):
                 link.autocases.add(self)
                 link.save()
@@ -220,7 +220,7 @@ class AutoCase(models.Model):
         self.save()
 
 
-class CaseLink(models.Model):
+class Linkage(models.Model):
     workitem = models.ForeignKey(WorkItem, on_delete=models.PROTECT, null=True, related_name='caselinks')
     autocases = models.ManyToManyField(AutoCase, blank=True, related_name='caselinks')
     autocase_pattern = models.CharField(max_length=65535)
@@ -270,7 +270,7 @@ class CaseLink(models.Model):
         self.error_related.clear()
         self.errors.clear()
 
-        links_duplicate = CaseLink.objects.filter(autocase_pattern=self.autocase_pattern)
+        links_duplicate = Linkage.objects.filter(autocase_pattern=self.autocase_pattern)
 
         if len(self.autocases.all()) < 1:
             self.errors.add("PATTERN_INVALID")

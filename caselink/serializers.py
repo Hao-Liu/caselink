@@ -6,7 +6,7 @@ from .models import *
 
 class LinkageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CaseLink
+        model = Linkage
 
 
 class WorkItemSerializer(serializers.ModelSerializer):
@@ -25,7 +25,7 @@ class AutoCaseSerializer(serializers.ModelSerializer):
 
 class WorkItemLinkageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CaseLink
+        model = Linkage
         exclude = ('workitem',)
 
 

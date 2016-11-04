@@ -45,13 +45,13 @@ def data(request):
         caselink_autocase.id AS "case",
         caselink_autocase.pr AS "pr",
         caselink_autocase.framework_id AS "framework",
-        caselink_caselink.title as "title",
-        caselink_caselink.workitem_id as "polarion"
+        caselink_linkage.title as "title",
+        caselink_linkage.workitem_id as "polarion"
         from
         ((
         caselink_autocase
-        left join caselink_caselink_autocases on caselink_autocase.id = caselink_caselink_autocases.autocase_id)
-        left join caselink_caselink on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
+        left join caselink_linkage_autocases on caselink_autocase.id = caselink_linkage_autocases.autocase_id)
+        left join caselink_linkage on caselink_linkage_autocases.linkage_id = caselink_linkage.id)
         order by "case"
         """
         cursor.execute(sql)
@@ -122,9 +122,9 @@ def data(request):
             from
             (((
             caselink_autocase
-            inner join caselink_caselink_autocases on caselink_autocase.id = caselink_caselink_autocases.autocase_id)
-            left join caselink_caselink on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
-            inner join caselink_workitem_documents on caselink_workitem_documents.workitem_id = caselink_caselink.workitem_id)
+            inner join caselink_linkage_autocases on caselink_autocase.id = caselink_linkage_autocases.autocase_id)
+            left join caselink_linkage on caselink_linkage_autocases.linkage_id = caselink_linkage.id)
+            inner join caselink_workitem_documents on caselink_workitem_documents.workitem_id = caselink_linkage.workitem_id)
             order by "case";
             """
         )
@@ -146,16 +146,16 @@ def data(request):
         caselink_workitem.automation AS "automation",
         caselink_workitem.need_automation AS "need_automation",
         caselink_workitem.maitai_id AS "maitai_id",
-        caselink_caselink_autocases.autocase_id as "cases",
-        caselink_caselink.autocase_pattern as "patterns",
+        caselink_linkage_autocases.autocase_id as "cases",
+        caselink_linkage.autocase_pattern as "patterns",
         caselink_error.message as "errors"
         from
         ((((
         caselink_workitem
-        left join caselink_caselink on caselink_caselink.workitem_id = caselink_workitem.id)
-        left join caselink_caselink_errors on caselink_caselink_errors.caselink_id = caselink_caselink.id)
-        left join caselink_error on caselink_error.id = caselink_caselink_errors.error_id)
-        left join caselink_caselink_autocases on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
+        left join caselink_linkage on caselink_linkage.workitem_id = caselink_workitem.id)
+        left join caselink_linkage_errors on caselink_linkage_errors.linkage_id = caselink_linkage.id)
+        left join caselink_error on caselink_error.id = caselink_linkage_errors.error_id)
+        left join caselink_linkage_autocases on caselink_linkage_autocases.linkage_id = caselink_linkage.id)
         where caselink_workitem.type <> 'heading' %s
         order by "polarion"
         """

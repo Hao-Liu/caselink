@@ -70,7 +70,7 @@ class AutoCaseDetail(generics.RetrieveUpdateDestroyAPIView):
             item.error_check(depth=0)
 
 class LinkageList(generics.ListCreateAPIView):
-    queryset = CaseLink.objects.all()
+    queryset = Linkage.objects.all()
     serializer_class = LinkageSerializer
     filter_backends = (filters.DjangoFilterBackend,)
 
@@ -81,7 +81,7 @@ class LinkageList(generics.ListCreateAPIView):
 
 
 class LinkageDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = CaseLink.objects.all()
+    queryset = Linkage.objects.all()
     serializer_class = LinkageSerializer
 
     def perform_update(self, serializer):
@@ -148,8 +148,8 @@ class WorkItemLinkageList(APIView):
     def get_objects(self, workitem):
         wi = get_object_or_404(WorkItem, id=workitem)
         try:
-            return CaseLink.objects.filter(workitem=wi)
-        except CaseLink.DoesNotExist:
+            return Linkage.objects.filter(workitem=wi)
+        except Linkage.DoesNotExist:
             raise Http404
 
     def get(self, request, workitem, format=None):
@@ -178,8 +178,8 @@ class WorkItemLinkageDetail(APIView):
     def get_object(self, workitem, pattern):
         wi = get_object_or_404(WorkItem, id=workitem)
         try:
-            return CaseLink.objects.get(workitem=wi, autocase_pattern=pattern)
-        except CaseLink.DoesNotExist:
+            return Linkage.objects.get(workitem=wi, autocase_pattern=pattern)
+        except Linkage.DoesNotExist:
             raise Http404
 
     def get(self, request, workitem, pattern, format=None):
@@ -207,7 +207,7 @@ class WorkItemLinkageDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class AutoCaseLinkageList(APIView):
+class AutoLinkageageList(APIView):
     """
     Retrieve, update or delete a caselink instance of a autocase.
     """
@@ -219,7 +219,7 @@ class AutoCaseLinkageList(APIView):
         case = get_object_or_404(AutoCase, id=autocase)
         try:
             return case.caselinks.all();
-        except CaseLink.DoesNotExist:
+        except Linkage.DoesNotExist:
             raise Http404
 
     def get(self, request, autocase, format=None):
