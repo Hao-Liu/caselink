@@ -83,6 +83,7 @@ class WorkItem(models.Model):
     documents = models.ManyToManyField(Document, blank=True, related_name='workitems')
     errors = models.ManyToManyField(Error, blank=True, related_name='workitems')
 
+    comment = models.CharField(max_length=65565, blank=True, null=True)
     need_automation = models.BooleanField(default=False)
     maitai_id = models.CharField(max_length=65535, blank=True)
     updated = models.DateTimeField(blank=False, auto_now_add=True)
@@ -91,7 +92,7 @@ class WorkItem(models.Model):
     error_related = models.ManyToManyField('self', blank=True)
 
     _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs',
-                 'documents', 'maitai_id', 'updated', 'errors') #TODO: some errors can be ignored
+                 'documents', 'maitai_id', 'updated', 'errors', 'comment') #TODO: some errors can be ignored
 
     def __str__(self):
         return self.id
