@@ -142,10 +142,13 @@ class WorkItem(models.Model):
 
         if len(links) == 0:
             if self.automation not in ['notautomated', 'manualonly']:
-                self.errors.add("WORKITEM_AUTOMATION_INCONSISTENCY")
+                self.errors.add("WORKITEM_AUTOMATED_NO_LINKAGE")
         else:
             if self.automation != 'automated':
-                self.errors.add("WORKITEM_AUTOMATION_INCONSISTENCY")
+                self.errors.add("WORKITEM_NOTAUTOMATED_WITH_LINKAGE")
+
+        if self.comment:
+            self.errors.add("WORKITEM_HAS_COMMENT")
 
         if deleted:
             self.errors.add("WORKITEM_DELETED")
@@ -200,7 +203,7 @@ class AutoCase(models.Model):
         self.errors.clear()
 
         if len(self.caselinks.all()) < 1:
-            self.errors.add("NO_WORKITEM")
+            self.errors.add("NO_LINKAGE")
 
         if len(self.caselinks.all()) > 1:
             self.errors.add("MULTIPLE_WORKITEM")
