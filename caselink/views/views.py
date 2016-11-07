@@ -146,6 +146,7 @@ def data(request):
         caselink_workitem.title AS "title",
         caselink_workitem.automation AS "automation",
         caselink_workitem.need_automation AS "need_automation",
+        caselink_workitem.comment AS "comment",
         caselink_workitem.maitai_id AS "maitai_id",
         caselink_linkage_autocases.autocase_id as "cases",
         caselink_linkage.autocase_pattern as "patterns",
@@ -178,6 +179,7 @@ def data(request):
                     'automation': workitem['automation'],
                     'need_automation': workitem['need_automation'],
                     'maitai_id': workitem['maitai_id'],
+                    'comment': workitem['comment'],
                     'patterns': [],
                     'cases': [],
 

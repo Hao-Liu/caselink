@@ -278,6 +278,11 @@ $(document).ready(function() {
         "visible": false,
         "render": htmlify,
       },
+      {
+        "data": "comment",
+        "visible": false,
+        "render": htmlify,
+      },
 
     ],
     "createdRow": function(row, data, index){
@@ -319,7 +324,14 @@ $(document).ready(function() {
         head.find(".detail-maitai").closest("tr").remove();
       }
 
-      if (d.patterns.length + d.errors.length + d.cases.length === 0 && !d.maitai_id) {
+      if(d.comment){
+        head.find(".detail-comment").html(d.comment);
+      }
+      else{
+        head.find(".detail-comment").closest("tr").remove();
+      }
+
+      if (d.patterns.length + d.errors.length + d.cases.length === 0 && !d.maitai_id && !d.comment) {
         head.empty().append('<div class="alert alert-info" role="alert">Nothing to show.</div>');
         setTimeout(slideUp, 800);
       }
