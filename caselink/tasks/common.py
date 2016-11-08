@@ -110,10 +110,13 @@ def update_autocase_error(case=None):
 
 @shared_task
 def dump_all_db():
-    #TODO Base dir
+    """
+    Dump all models except Error.
+    """
+    # TODO: hardcoded BASE_DIR
     filename = BASE_DIR + "/" + str(datetime.datetime.now().isoformat()) + ".yaml"
     with open(filename, 'w+') as base_fp:
-        for model in [Error, Framework, Project, Document, Component, Arch, #Meta models
+        for model in [Framework, Project, Document, Component, Arch, #Meta models
                       WorkItem, AutoCase, Linkage, Bug, AutoCaseFailure]:
             base_fp.write(serializers.serialize('yaml', model.objects.all(), fields=model._min_dump))
 
@@ -130,9 +133,12 @@ def restore_all_db(filename):
 @shared_task
 @transaction.atomic
 def clean_all_db():
+    """
+    Clean all models except Error.
+    """
     for model in [
             Component, Arch, AutoCase, AutoCaseFailure, Bug, Linkage, WorkItem,
-            Document, Project, Framework, Error]:
+            Document, Project, Framework]:
         model.objects.all().delete()
 
 
