@@ -92,7 +92,7 @@
         if(column.visible()){
           $('input', column.footer()).on('keyup change', function(){
             column
-              .search(this.value)
+              .search(this.value, true)
               .draw();
           });
         }
