@@ -89,13 +89,16 @@ class WorkItem(models.Model):
     jira_id = models.CharField(max_length=65535, blank=True, null=True)
     updated = models.DateTimeField(blank=False, auto_now_add=True)
 
+    changes = models.TextField(blank=True, null=True)
+    confirmed = models.DateTimeField(blank=True, null=True)
+
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)
 
     _user_data = ('comment', 'need_automation', 'maitai_id', 'jira_id', )
 
     _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs',
-                 'documents', 'maitai_id', 'jira_id', 'updated', 'errors', 'comment') #TODO: some errors can be ignored
+                 'documents', 'maitai_id', 'jira_id', 'updated', 'errors', 'comment', 'changes', 'confirmed') #TODO: some errors can be ignored
 
     def __str__(self):
         return self.id
@@ -152,6 +155,9 @@ class WorkItem(models.Model):
 
         if self.comment:
             self.errors.add("WORKITEM_HAS_COMMENT")
+
+        if self.changes:
+            self.errors.add("WORKITEM_CHANGED")
 
         if deleted:
             self.errors.add("WORKITEM_DELETED")

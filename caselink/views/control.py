@@ -37,7 +37,7 @@ def _get_finished_tasks_results(number):
     task_metas = TaskMeta.objects.order_by('-date_done')[0:number-1]
     for i in task_metas:
         ret.append(i.to_dict())
-        ret[-1]['result'] = str(ret[-1]['result'])
+        ret[-1]['result'] = "%s" % ret[-1]['result']
     return ret
 
 

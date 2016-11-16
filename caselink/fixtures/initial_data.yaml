@@ -18,6 +18,9 @@
   pk: WORKITEM_DELETED
   fields: {message: Manual case deleted in document}
 - model: caselink.error
+  pk: WORKITEM_CHANGED
+  fields: {message: Manual case changed in document}
+- model: caselink.error
   pk: WORKITEM_MULTI_PATTERN
   fields: {message: Manual case linked to multiple caselink}
 - model: caselink.error

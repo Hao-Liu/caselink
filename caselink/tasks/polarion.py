@@ -1,4 +1,9 @@
-from __future__ import print_function
+import re
+import difflib
+import datetime
+import HTMLParser
+import suds
+
 from django.core.exceptions import ObjectDoesNotExist
 import pytz
 
@@ -110,6 +115,184 @@ def get_automation_of_wi(wi_id):
     return ret
 
 
+def get_recent_changes(wi_id, service=None, start_time=None):
+    """
+    Get changes after start_time, return a list of suds objects.
+    """
+    def suds_2_object(suds_obj):
+        obj = OrderedDict()
+        for key, value in suds_obj.__dict__.items():
+            if key.startswith('_'):
+                continue
+
+            if isinstance(value, suds.sax.text.Text):
+                value = literal(value.strip())
+            elif isinstance(value, (bool, int, datetime.date, datetime.datetime)):
+                pass
+            elif value is None:
+                pass
+            elif isinstance(value, list):
+                value_list = []
+                for elem in value:
+                    value_list.append(suds_2_object(elem))
+                value = value_list
+            elif hasattr(value, '__dict__'):
+                value = suds_2_object(value)
+            else:
+                print('Unhandled value type: %s' % type(value))
+
+            obj[key] = value
+        return obj
+
+    utc = pytz.UTC
+
+    uri = 'subterra:data-service:objects:/default/%s${WorkItem}%s' % (
+        PROJECT, wi_id)
+    if service is None:
+        service = _WorkItem.session.tracker_client.service
+    changes = service.generateHistory(uri)
+    latest_changes = []
+    for change in changes:
+        if not start_time or utc.localize(change.date) > start_time:
+            latest_changes.append(suds_2_object(change))
+    return latest_changes
+
+
+def filter_changes(changes):
+    """
+    Filter out irrelevant changes, return a list of dict.
+    """
+
+    def convert_text(text):
+        lines = re.split(r'\<[bB][rR]/\>', text)
+        new_lines = []
+        for line in lines:
+            line = " ".join(line.split())
+            line = line.strip()
+            if not line:
+                continue
+            line = HTMLParser.HTMLParser().unescape(line)
+            new_lines.append(line)
+        return '\n'.join(new_lines)
+
+    def diff_test_steps(before, after):
+        if before:
+            steps_before = before['steps']['TestStep']
+            if not isinstance(steps_before, list):
+                steps_before = [steps_before]
+        else:
+            steps_before = []
+        if after:
+            steps_after = after['steps']['TestStep']
+            if not isinstance(steps_after, list):
+                steps_after = [steps_after]
+        else:
+            steps_after = []
+
+        diff_txt = ''
+        if len(steps_before) == len(steps_after):
+            for idx in range(len(steps_before)):
+                if steps_before:
+                    step_before, result_before = [
+                        convert_text(text['content'])
+                        for text in steps_before[idx].get('values', {}).get('Text', '')]
+                else:
+                    step_before = result_before = ''
+                if steps_after:
+                    step_after, result_after = [
+                        convert_text(text['content'])
+                        for text in steps_after[idx].get('values', {}).get('Text', '')]
+                else:
+                    step_after = result_after = ''
+                if step_before != step_after:
+                    diff_txt += 'Step %s changed:\n' % (idx + 1)
+                    for line in difflib.unified_diff(step_before.splitlines(1),
+                                                     step_after.splitlines(1)):
+                        diff_txt += line
+                    diff_txt += '\n'
+                if result_before != result_after:
+                    diff_txt += 'Result %s changed:\n' % (idx + 1)
+                    for line in difflib.unified_diff(result_before.splitlines(1),
+                                                     result_after.splitlines(1)):
+                        diff_txt += line
+                    diff_txt += '\n'
+        else:
+            diff_txt = ('Steps count changed %s --> %s' %
+                        (len(steps_before), len(steps_after)))
+        return diff_txt
+
+    diffs = []
+    for change in changes:
+        for diff in change['diffs']['item']:
+            field = diff['fieldName']
+            # Ignore irrelevant properties changing
+            if field in [
+                    'updated', 'outlineNumber', 'caseautomation', 'status',
+                    'previousStatus', 'approvals', 'tcmscaseid', 'caseimportance']:
+                continue
+
+            # Ignore parent item changing
+            if (field == 'linkedWorkItems' and
+                    diff['added'] and diff['removed'] and
+                    len(diff['added']['item']) == 1 and
+                    len(diff['removed']['item']) == 1 and
+                    diff['added']['item'][0]['role']['id'] == 'parent' and
+                    diff['removed']['item'][0]['role']['id'] == 'parent'):
+                continue
+
+            result_diff = {'field': field, 'added': [], 'removed': [],
+                           'changed': ''}
+
+            if diff['added']:
+                adds = diff['added']['item']
+                for add in adds:
+                    result_diff['added'].append(add)
+
+            if diff['removed']:
+                removes = diff['removed']['item']
+                for remove in removes:
+                    result_diff['removed'].append(remove)
+
+            if 'before' in diff or 'after' in diff:
+                before = diff.get('before', '')
+                after = diff.get('after', '')
+
+                if field == 'testSteps':
+                    step_change = diff_test_steps(before, after)
+                    if step_change:
+                        result_diff['changed'] = diff_test_steps(before, after)
+                        diffs.append(result_diff)
+                    continue
+
+                if 'id' in before:
+                    before = before['id']
+                if 'id' in after:
+                    after = after['id']
+                if 'content' in before:
+                    before = convert_text(before['content'])
+                if 'content' in after:
+                    after = convert_text(after['content'])
+                before += '\n'
+                after += '\n'
+
+                diff_txt = ''
+                for line in difflib.unified_diff(
+                        before.splitlines(1),
+                        after.splitlines(1)):
+                    diff_txt += line
+                result_diff['changed'] = diff_txt
+                diffs.append(result_diff)
+    return diffs
+
+
+def add_jira_comment(jira_id, comment):
+    pass
+
+
+def info_maitai_workitem_changed(wi_instance):
+    pass
+
+
 @shared_task
 def sync_with_polarion():
     """
@@ -219,14 +402,36 @@ def sync_with_polarion():
                 doc.workitems.add(workitem)
                 doc.save()
 
+            #TODO: Create JIRA comment
+            workitem_changes = get_recent_changes(wi_id, start_time=workitem.updated)
+            workitem_changes = filter_changes(workitem_changes)
+
             workitem.title = wi['title']
             workitem.automation = wi.get('automation', workitem.automation)
+
+            if workitem_changes:
+                workitem.changes = workitem_changes
+                if workitem.automation == 'automated':
+                    if workitem.jira_id:
+                        add_jira_comment(workitem.jira_id,
+                                         comment="Caselink Changed: %s" % workitem_changes
+                                         )
+                    else:
+                        info_maitai_workitem_changed(workitem)
+                else:
+                    if workitem.jira_id:
+                        add_jira_comment(workitem.jira_id,
+                                         comment="Caselink Changed: %s" % workitem_changes
+                                         )
+
+            #TODO: use comfirmed as a standlone attribute
+            workitem.comfirmed = workitem.updated
+
             workitem.updated = wi['updated']
 
             #TODO: Trigger a maitai job by checking automation and history.
-
-            workitem.error_check()
             workitem.save()
+            workitem.error_check()
 
     return (
         "Created: " + ', '.join(creating_set) + "\n" +
