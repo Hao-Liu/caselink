@@ -30,12 +30,23 @@ $(document).ready(function() {
       );
     }
 
+    var comment = linkage_modal.find('#workitem_comment').val(),
+        workitem = linkage_modal.find('#linkage_manualcase').val();
+
+    console.log('PUT', '/manual/' + workitem + "/", JSON.stringify({'id': workitem, 'comment': comment}));
+    promises.push($.ajax({
+      contentType: "application/json; charset=utf-8",
+      method: 'PUT',
+      url:'/manual/' + workitem + "/",
+      data: JSON.stringify({'id': workitem, 'comment': comment}),
+    }));
+
     var items = linkage_modal.find('.linkage-list-item');
 
     for(let i = 0; i < items.length; i++){
       var ele = $(items[i]);
       var data = {
-        workitem: linkage_modal.find('#linkage_manualcase').val(),
+        workitem: workitem,
         autocase_pattern: ele.find("#linkage_pattern").val(),
         framework: ele.find("#linkage_framework").val(),
       };
@@ -66,7 +77,10 @@ $(document).ready(function() {
     }).always(function(){
       button.prop('disabled', false);
       $.get('data?pk=' + linkage_modal.find('#linkage_manualcase').val())
-        .done(function(data){linkage_modal.data('row').data(data.data[0]).draw();});
+        .done(function(data){
+          linkage_modal.data('row').data(data.data[0]).draw();
+          linkage_modal.data('row').child.hide();
+        });
     });
   });
 
@@ -137,7 +151,7 @@ $(document).ready(function() {
         }
       },
       {
-        text: 'Edit Linkage',
+        text: 'Edit',
         action: function ( e, dt, node, config ) {
           var filterSet = table.$('tr', {selected:true});
           if(filterSet.length > 1){
@@ -153,6 +167,7 @@ $(document).ready(function() {
             $.get("/manual/" + d.polarion + "/link/").done(function(data){
               $.each(data, function(idx, ele){
                 var new_item = linkage_list_item.clone();
+                new_item.find("#comment").val(ele.comment);
                 new_item.find("#linkage_pattern").val(ele.autocase_pattern);
                 new_item.find("#linkage_framework").val(ele.framework);
                 new_item.find("#linkage_autocases").html(ele.autocases.join("<br>"));
