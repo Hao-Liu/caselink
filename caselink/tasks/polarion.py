@@ -128,6 +128,7 @@ def sync_with_polarion():
     updating_set = polarion_set & caselink_set
     deleting_set = caselink_set - polarion_set
     creating_set = polarion_set - caselink_set
+    mark_deleting_set = set()
 
     direct_call = current_task.request.id is None
     if not direct_call:
@@ -185,10 +186,21 @@ def sync_with_polarion():
                         error.workitems.add(workitem)
                         error.save()
 
+            workitem.error_check()
             workitem.save()
 
-    for wi_id in deleting_set:
-        models.WorkItem.objects.get(id=wi_id).mark_deleted()
+    for wi_id in deleting_set.copy():
+        wi = models.WorkItem.objects.get(id=wi_id)
+        related_wis = wi.error_related.all()
+        if not any([getattr(wi, data) for data in wi._user_data]):
+            if not wi.caselinks.exists():
+                wi.delete()
+                for wi_r in related_wis:
+                    wi_r.error_check()
+                continue
+        wi.mark_deleted()
+        mark_deleting_set.add(wi_id)
+        deleting_set.discard(wi_id)
 
     for wi_id in updating_set:
         with transaction.atomic():
@@ -213,10 +225,12 @@ def sync_with_polarion():
 
             #TODO: Trigger a maitai job by checking automation and history.
 
+            workitem.error_check()
             workitem.save()
 
     return (
         "Created: " + ', '.join(creating_set) + "\n" +
         "Deleted: " + ', '.join(deleting_set) + "\n" +
+        "Mark Deleted: " + ', '.join(deleting_set) + "\n" +
         "Updated: " + ', '.join(updating_set)
     )
