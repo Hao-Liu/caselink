@@ -1,4 +1,4 @@
-var webpack = require('webpack')
+var webpack = require('webpack');
 module.exports = {
   context: __dirname + "/caselink/static/javascript",
   entry: {
@@ -66,5 +66,10 @@ module.exports = {
       "window.jQuery": "jquery"
     }),
     new webpack.optimize.CommonsChunkPlugin("vendor", "vendor.bundle.js"),
-  ]
+  ],
+  resolve: {
+    alias: {
+      'vue$': 'vue/dist/vue.js'
+    }
+  }
 };

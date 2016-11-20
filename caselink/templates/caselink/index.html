@@ -20,14 +20,14 @@
                 </div>
                 <div id="navbar" class="collapse navbar-collapse">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#" data-toggle="modal" data-target="#task_panel">Tasks</a></li>
+                        <li><a href="#" data-toggle="modal" data-target="#task-panel">Tasks</a></li>
                         <li><a href="{% url 'index' %}">Index</a></li>
                     </ul>
                 </div>
             </div>
         </nav>
 
-        <div class="modal fade" id="task_panel" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal fade" id="task-panel" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -35,50 +35,91 @@
                         <h4 class="modal-title">Tasks</h4>
                     </div>
                     <div class="modal-body">
-                        <div id="task_progress">
-                            <div class="progress progress-bar-proto">
-                                <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
+                        <div id="task-list">
+                            <div v-if="tasks.length == 0" class="alert alert-success empty-proto" role="alert">There is no running task.</div>
+                            <div v-for="item in tasks">
+                                <h3>${item.name}</h3>
+                                <div class="progress progress-bar-proto">
+                                    <div v-if="item.meta && item.meta.current && item.meta.total" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuemin="0"
+                                        v-bind:aria-valuenow="item.meta.current" v-bind:aria-valuemax="item.meta.total"
+                                        v-bind:style="{ width: '' + ((item.meta.current/item.meta.total) * 100.0) + '%', 'min-width': '6em' }">
+                                        ${"" + item.meta.current + "/" + item.meta.total + ""}
+                                    </div>
+                                    <div v-else class="progress-bar progress-bar-striped active" role="progressbar" aria-valuemin="0"
+                                        aria-valuenow="1" aria-valuemax="1" style="width: 100%; min-width: '6em'">
+                                        ${item.state || "IN PROGRESS"}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="alert alert-success empty-proto" role="alert">There is no running task.</div>
                         </div>
-                        <div class="panel panel-default" id="backup_list">
-                            <div class="panel-heading">Backup List
-                                <form action="control/upload/" method="post" enctype="multipart/form-data" class="hidden" id="backup_upload_form">
+                        <div class="panel panel-default" id="backup-list">
+                            <div class="panel-heading">
+                                Backup List
+                                <form action="control/upload/" method="post" enctype="multipart/form-data" class="hidden" id="backup-upload-form">
                                     {% csrf_token %}
-                                    <input type="file" name='file' id="backup_upload_input">
+                                    <input type="file" name='file' id="backup-upload-input">
                                 </form>
-                                <a href="javascript:void(0)"><i class="fa fa-upload pull-right backup-upload" aria-hidden="true">&nbspUpload&nbsp</i></a>
-                                <a href="javascript:void(0)"><i class="fa fa-plus pull-right backup-new" aria-hidden="true">&nbspNew&nbsp</i></a>
+                                <a v-on:click="backupUpload" href="javascript:void(0)">
+                                    <i class="fa fa-upload pull-right backup-upload" aria-hidden="true">&nbspUpload&nbsp</i>
+                                </a>
+                                <a v-on:click="backupNew" href="javascript:void(0)">
+                                    <i class="fa fa-plus pull-right" aria-hidden="true">&nbspNew&nbsp</i>
+                                </a>
                             </div>
                             <ul class="list-group">
-                                <li class="list-group-item empty-item">No Backup</li>
-                                <li class="list-group-item backup-item">
-                                    <a href="javascript:void(0)"><i class="fa fa-download pull-right backup-download" aria-hidden="true">&nbspDownload&nbsp</i></a>
-                                    <a href="javascript:void(0)"><i class="fa fa-medkit pull-right backup-restore" aria-hidden="true">&nbspRestore&nbsp</i></a>
-                                    <a href="javascript:void(0)"><i class="fa fa-trash pull-right backup-delete" aria-hidden="true">&nbspDelete&nbsp</i></a>
+                                <li v-if="backups.length == 0" class="list-group-item empty-item">
+                                    No Backup
+                                </li>
+                                <li v-for="item in backups" class="list-group-item backup-item">
+                                    ${ item.file }
+                                    <span class="label label-default"> ${ (parseInt(item.size)/(1024*1024)).toFixed(1) }MB </span>
+                                    <a v-bind:href="'{% url 'backup_list' %}' + item.file">
+                                        <i class="fa fa-download pull-right" aria-hidden="true">&nbspDownload&nbsp</i>
+                                    </a>
+                                    <a v-on:click="backupRestore(item.file)" href="javascript:void(0)">
+                                        <i class="fa fa-medkit pull-right" aria-hidden="true">&nbspRestore&nbsp</i>
+                                    </a>
+                                    <a v-on:click="backupDelete(item.file)" href="javascript:void(0)">
+                                        <i class="fa fa-trash pull-right" aria-hidden="true">&nbspDelete&nbsp</i>
+                                    </a>
                                 </li>
                             </ul>
                         </div>
                         <div class="panel panel-default" id="result_list">
-                            <div class="panel-heading">Task results
+                            <div class="panel-heading">
+                                Task results
                             </div>
                             <ul class="list-group">
-                                <li class="list-group-item empty-item">No Results</li>
-                                <li class="list-group-item result-item">
+                                <li v-if="results.length == 0" class="list-group-item empty-item">
+                                    No Results
+                                </li>
+                                <li v-for="item in results" class="list-group-item result-item">
+                                    <h3>${item.task_id}</h3>
                                     <div class="well">
-                                    </div> </li>
+                                        ${item.result | myHtmlify}
+                                    </div>
+                                </li>
                             </ul>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-info btn-op btn-auto-error">Autocase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
-                        <button type="button" class="btn btn-info btn-op btn-manual-error">Manualcase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
-                        <button type="button" class="btn btn-info btn-op btn-linkage-error">Linkage Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
-                        <button type="button" class="btn btn-info btn-op btn-sync-polarion">Sync with Polarion<i class="fa fa-fw fa-cog" aria-hidden="true"></i></button>
+                        <button type="button" class="btn btn-info btn-op" v-on:click="triggerTask('?async=true&trigger=autocase_error_check')">
+                            Autocase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-info btn-op" v-on:click="triggerTask('?async=true&trigger=manualcase_error_check')">
+                            Manualcase Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-info btn-op" v-on:click="triggerTask('?async=true&trigger=linkage_error_check')">
+                            Linkage Error Check<i class="fa fa-fw fa-cog" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-info btn-op" v-on:click="triggerTask('?async=true&trigger=polarion_sync')">
+                            Sync with Polarion<i class="fa fa-fw fa-cog" aria-hidden="true"></i>
+                        </button>
                         <br>
                         <br>
-                        <button type="button" class="btn btn-danger btn-cancel">Cancel All Tasks<i class="fa fa-fw fa-close" aria-hidden="true"></i></button>
+                        <button type="button" class="btn btn-danger" v-on:click="triggerTask('?cancel=true')">
+                            Cancel All Tasks <i class="fa fa-fw fa-close" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div><!-- /.modal-content -->
             </div>

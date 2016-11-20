@@ -42,17 +42,19 @@ def _get_finished_tasks_results(number):
 
 
 def _get_running_tasks_status():
-    task_status = {}
+    task_status = []
     _tasks = _get_tasks()
     if not _tasks:
         return {}
     for worker, tasks in _tasks:
         for task in tasks:
             res = AsyncResult(task['id'])
-            task_status[task['name']] = {
+            task_status.append({
+                'name': task['name'],
+                'id': task['id'],
                 'state': res.state,
                 'meta': res.info
-            }
+            })
     return task_status
 
 
@@ -114,9 +116,9 @@ def _get_backup_list():
 
 def overview(request):
     return JsonResponse({
-        'task': _get_running_tasks_status(),
+        'tasks': _get_running_tasks_status(),
         'results': _get_finished_tasks_results(7),
-        'backup': _get_backup_list(),
+        'backups': _get_backup_list(),
     })
 
 
