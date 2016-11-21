@@ -231,6 +231,6 @@ def sync_with_polarion():
     return (
         "Created: " + ', '.join(creating_set) + "\n" +
         "Deleted: " + ', '.join(deleting_set) + "\n" +
-        "Mark Deleted: " + ', '.join(deleting_set) + "\n" +
+        "Mark Deleted: " + ', '.join(mark_deleting_set) + "\n" +
         "Updated: " + ', '.join(updating_set)
     )
