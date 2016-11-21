@@ -95,9 +95,7 @@
                                 </li>
                                 <li v-for="item in results" class="list-group-item result-item">
                                     <h3>${item.task_id}</h3>
-                                    <div class="well">
-                                        ${item.result | myHtmlify}
-                                    </div>
+                                    <div class="well" v-html="myHtmlify(item.result)"> </div>
                                 </li>
                             </ul>
                         </div>

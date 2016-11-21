@@ -36,8 +36,6 @@ var vm = new Vue({
     backupUpload: function() {
       $('#backup-upload-input').click();
     },
-  },
-  filters: {
     myHtmlify: function(value){
       return htmlify(value);
     },
