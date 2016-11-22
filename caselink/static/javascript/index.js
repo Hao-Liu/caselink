@@ -1,4 +1,4 @@
-var polling = false;
+var taskPanelPolling = false;
 var htmlify = require('./lib/htmlify.js');
 var Vue = require('vue');
 
@@ -13,45 +13,56 @@ function alertAjax(url){
   });
 }
 
+var taskData =  {
+  tasks: [],
+  backups: [],
+  results: []
+};
 var vm = new Vue({
-  el: "#task-panel",
+  el: "#caselink",
   data: {
-    tasks: [],
-    backups: [],
-    results: []
   },
-  methods: {
-    triggerTask: function(taskParams) {
-      alertAjax('control/trigger/' + taskParams);
-    },
-    backupRestore: function(fileName) {
-      alertAjax('control/restore/'+ fileName);
-    },
-    backupDelete: function(fileName) {
-      alertAjax('control/backup/'+ fileName + '?delete=true');
-    },
-    backupNew: function() {
-      this.triggerTask('?async=true&trigger=dump_all_db');
-    },
-    backupUpload: function() {
-      $('#backup-upload-input').click();
-    },
-    myHtmlify: function(value){
-      return htmlify(value);
+  components: {
+    'task-panel': {
+      data: function (){
+        return taskData;
+      },
+      methods: {
+        triggerTask: function(taskParams) {
+          alertAjax('control/trigger/' + taskParams);
+        },
+        backupRestore: function(fileName) {
+          alertAjax('control/restore/'+ fileName);
+        },
+        backupDelete: function(fileName) {
+          alertAjax('control/backup/'+ fileName + '?delete=true');
+        },
+        backupNew: function() {
+          this.triggerTask('?async=true&trigger=dump_all_db');
+        },
+        backupUpload: function() {
+          $('#backup-upload-input').click();
+        },
+        myHtmlify: function(value){
+          return htmlify(value);
+        },
+      },
     },
   },
-  delimiters: ['${', '}']
+  watch: {
+  },
+  delimiters: ['${', '}'],
 });
 
 $(document).ready(function() {
   "use strict";
 
   $('#task-panel').on('hidden.bs.modal', function (e) {
-    polling = false;
+    taskPanelPolling = false;
   });
 
   $('#task-panel').on('show.bs.modal', function (e) {
-    polling = true;
+    taskPanelPolling = true;
     poll_status();
   });
 
@@ -68,12 +79,12 @@ $(document).ready(function() {
       'cache': false
     })
       .done(function(data){
-        vm.tasks = data.tasks;
-        vm.backups = data.backups;
-        vm.results = data.results;
+        taskData.tasks = data.tasks;
+        taskData.backups = data.backups;
+        taskData.results = data.results;
       })
       .always(function(){
-        if(polling)
+        if(taskPanelPolling)
           setTimeout(poll_status, 1000);
       });
   }
