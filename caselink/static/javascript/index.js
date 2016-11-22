@@ -1,6 +1,7 @@
 var taskPanelPolling = false;
 var htmlify = require('./lib/htmlify.js');
 var Vue = require('vue');
+var _ = require('lodash');
 
 function alertAjax(url){
   $.ajax({
@@ -46,6 +47,29 @@ var vm = new Vue({
         myHtmlify: function(value){
           return htmlify(value);
         },
+      },
+    },
+    'pattern-matcher': {
+      data: function (){
+        return {
+          pattern: '',
+          cases: ''
+        };
+      },
+      methods: {
+        fetchCases: _.debounce(function(pattern){
+          var that = this;
+          $.get('pattern-matcher/' + this.pattern)
+            .done(function(data){
+              that.cases = data.cases.join("<br>");
+            });
+        },
+          800),
+      },
+      watch: {
+        pattern: function(){
+          this.fetchCases(this.pattern);
+        }
       },
     },
   },

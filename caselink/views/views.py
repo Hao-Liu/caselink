@@ -22,6 +22,20 @@ def m2a(request):
 def index(request):
     return render(request, 'caselink/index.html')
 
+def pattern_matcher(request, pattern=''):
+    ret = []
+    def _collect_case(test_case):
+        if test_pattern_match(pattern, test_case.id):
+            ret.append(test_case.id)
+            if len(ret) > 100:
+                return False
+        return True
+
+    for offset in xrange(0, AutoCase.objects.all().count(), 1000):
+        for case in AutoCase.objects.all()[offset:offset + 1000]:
+            if not _collect_case(case):
+                return JsonResponse({"cases": ret})
+    return JsonResponse({"cases": ret})
 
 def data(request):
     #TODO: sql too redundant
