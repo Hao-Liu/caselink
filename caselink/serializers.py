@@ -12,6 +12,11 @@ class LinkageSerializer(serializers.ModelSerializer):
 class WorkItemSerializer(serializers.ModelSerializer):
     caselinks = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     bugs = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    patterns = serializers.SerializerMethodField()
+
+    def get_patterns(self, wi):
+        return [link.autocase_pattern for link in wi.caselinks.all()]
+
     class Meta:
         model = WorkItem
 
