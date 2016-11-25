@@ -1,10 +1,17 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
 from .models import *
 
 
 class LinkageSerializer(serializers.ModelSerializer):
+    def validate_autocase_pattern(self, data):
+        for case in AutoCase.objects.all():
+            if test_pattern_match(data, case.id):
+                return data
+            raise serializers.ValidationError("Pattern Invalid.")
+
     class Meta:
         model = Linkage
 
