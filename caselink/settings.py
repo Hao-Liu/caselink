@@ -159,6 +159,15 @@ CASELINK_POLARION = {
     'REASON': 'Polarion support is disabled for now, please contract the admin.',
 }
 
+CASELINK_JIRA = {
+    # 'URL': URL is in pylarion
+    'ENABLE': False,
+    'USER': '',
+    # Parameters for Polarion workitem fetching
+    'PASSWORD': '',
+    'SERVER': '',
+}
+
 CASELINK_MEMBERS = ('member1 member2')
 CASELINK_DEFAULT_ASSIGNEE = 'member1'
 
