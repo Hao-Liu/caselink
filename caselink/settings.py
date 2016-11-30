@@ -154,7 +154,7 @@ CASELINK_POLARION = {
     # 'URL': URL is in pylarion
     'ENABLE': False,
     # Parameters for Polarion workitem fetching
-    'PROJECT': [],
+    'PROJECT': '',
     'SPACES': [],
     'REASON': 'Polarion support is disabled for now, please contract the admin.',
 }
