@@ -129,13 +129,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 FIXTURE_DIRS = [
-        'caselink/fixture/'
-        ]
+    'caselink/fixture/'
+]
 
 REST_FRAMEWORK = {
-        'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
-        'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-        'PAGE_SIZE': 100,
+    'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
 }
 
 CASELINK = {
@@ -151,7 +151,11 @@ CASELINK_MAITAI = {
 }
 
 CASELINK_POLARION = {
+    # 'URL': URL is in pylarion
     'ENABLE': False,
+    # Parameters for Polarion workitem fetching
+    'PROJECT': [],
+    'SPACES': [],
     'REASON': 'Polarion support is disabled for now, please contract the admin.',
 }
 
@@ -162,4 +166,3 @@ try:
     from caselink.settings_instance import *
 except ImportError:
     print("Instance setting not found.")
-

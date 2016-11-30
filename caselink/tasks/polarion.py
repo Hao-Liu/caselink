@@ -18,8 +18,8 @@ from caselink import models
 from celery import shared_task, current_task
 from django.db import transaction
 
-PROJECT = 'RedHatEnterpriseLinux7'
-SPACES = ['Virt-VirtToolsQE', 'Virt-LibvirtQE']
+PROJECT = settings.CASELINK_POLARION['PROJECT']
+SPACES = settings.CASELINK_POLARION['SPACES']
 DEFAULT_COMPONENT = 'n/a'
 
 
