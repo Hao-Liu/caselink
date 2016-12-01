@@ -208,6 +208,8 @@ def create_maitai_request(request):
     polarion_url = settings.CASELINK_POLARION['URL']
     project = settings.CASELINK_POLARION['PROJECT']
 
+    parent_issue = settings.CASELINK_JIRA['PARENT_ISSUE']
+
     ret = {}
 
     for workitem_id in workitem_ids:
@@ -224,7 +226,8 @@ def create_maitai_request(request):
             "map_polarionUrl": "%s/#/project/%s/workitem?id=%s" % (polarion_url, project, str(workitem_id)),
             "map_polarionTitle": wi.title,
             "map_issueAssignee": assignee[0],
-            "map_issueLabels": labels
+            "map_issueLabels": labels,
+            "map_parentIssueKey": parent_issue,
         },
             auth=(maitai_user, maitai_pass), verify=False)
 
