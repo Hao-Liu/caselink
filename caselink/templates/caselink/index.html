@@ -5,6 +5,14 @@
         <script src="{% static "dist/vendor.bundle.js" %}" type="text/javascript" charset="utf-8"></script>
         <script src="{% static "dist/init.js" %}" type="text/javascript" charset="utf-8"></script>
         <script src="{% static "dist/head.js" %}" type="text/javascript" charset="utf-8"></script>
+        <script type="text/javascript" charset="utf-8">
+            sharedParameters.set("polarionURL", "{{ POLARION_URL }}");
+            sharedParameters.set("polarionDefaultProject", "{{ POLARION_DEFAULT_PROJECT }}");
+            sharedParameters.set("maitaiURL", "{{ MAITAI_URL }}");
+            sharedParameters.set("jiraURL", "{{ JIRA_URL }}");
+            sharedParameters.set("caselinkMembers", "{{ CASELINK_MEMBERS }}");
+            sharedParameters.set("caselinkDefaultAssignee", "{{ CASELINK_DEFAULT_ASSIGNEE }}");
+        </script>
     </head>
     <body>
         <div id="caselink">

@@ -7,7 +7,7 @@ module.exports = {
     // The script that will load before any page content loaded.
     head: './pack/pace.js',
     // Initial Script for all page.
-    init: ['./pack/style.js'],
+    init: ['./pack/style.js', './lib/sharedParameters.js'],
     // Page specified entry.
     a2m: './a2m.js',
     m2a: './m2a.js',
