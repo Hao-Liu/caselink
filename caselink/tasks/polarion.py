@@ -4,14 +4,19 @@ import datetime
 import HTMLParser
 import suds
 import requests
+import pytz
 from jira import JIRA
 
-import xml.etree.ElementTree as ET
-
-from django.core.exceptions import ObjectDoesNotExist
-import pytz
-
 from collections import OrderedDict
+from django.conf import settings
+from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
+
+from caselink import models
+from caselink.utils.maitai import CaseUpdateWorkflow, WorkflowException
+
+from celery import shared_task, current_task
+
 try:
     from pylarion.document import Document
     from pylarion.enum_option_id import EnumOptionId
@@ -22,10 +27,6 @@ except ImportError:
     PYLARION_INSTALLED = False
     pass
 
-from django.conf import settings
-from caselink import models
-from celery import shared_task, current_task
-from django.db import transaction
 
 PROJECT = settings.CASELINK_POLARION['PROJECT']
 SPACES = settings.CASELINK_POLARION['SPACES']
@@ -305,31 +306,11 @@ def add_jira_comment(jira_id, comment):
 
 
 def info_maitai_workitem_changed(workitem, assignee=None, labels=None):
-    maitai_pass = settings.CASELINK_MAITAI['PASSWORD']
-    maitai_user = settings.CASELINK_MAITAI['USER']
-    maitai_url = settings.CASELINK_MAITAI['ADD-URL']
-    polarion_url = settings.CASELINK_POLARION['URL']
-    #TODO: remove verify=False
-    res = requests.post(maitai_url, params={
-        "map_polarionId": workitem.id,
-        "map_polarionUrl": "%s/#/project/%s/workitem?id=%s" % (polarion_url, PROJECT, str(workitem.id)),
-        "map_polarionTitle": workitem.title,
-        "map_issueAssignee": assignee[0],
-        "map_issueLabels": labels
-    },
-        auth=(maitai_user, maitai_pass), verify=False)
+    workflow = CaseUpdateWorkflow(workitem.id, workitem.title,
+                                  assignee=assignee, label=labels)
+    res = workflow.start()
 
-    res.raise_for_status()
-
-    root = ET.fromstring(res.content)
-
-    process = root.find('process-id').text
-    state = root.find('state').text
-    id = root.find('id').text
-    parentProcessInstanceId = root.find('parentProcessInstanceId').text
-    status = root.find('status').text
-
-    workitem.maitai_id = id
+    workitem.maitai_id = res['id']
     workitem.need_automation = True
 
 

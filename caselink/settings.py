@@ -142,13 +142,17 @@ CASELINK = {
 }
 
 CASELINK_MAITAI = {
-    'ENABLE': False,
-    'REASON': 'Maitai haven\'t implemented the workflow we needed yet.',
-    'ASSIGNEE': '',
     'USER': '',
     'PASSWORD': '',
-    'ADD-URL': '',
-    'UPDATE-URL': '',
+    'ENABLE': False,
+    'REASON': 'Maitai haven\'t implemented the workflow we needed yet.',
+    'DEFAULT_ASSIGNEE': '',
+    'PARENT_ISSUE': '',
+
+    'SERVER': '',
+    'DEPLOYMENT': '',
+    'CASEADD_DEFINITION': '',
+    'CASEUPDATE_DEFINITION': '',
 }
 
 CASELINK_POLARION = {
@@ -168,6 +172,7 @@ CASELINK_JIRA = {
     # Parameters for Polarion workitem fetching
     'PASSWORD': '',
     'SERVER': '',
+    'PARENT_ISSUE': '',
 }
 
 CASELINK_MEMBERS = ('member1 member2')

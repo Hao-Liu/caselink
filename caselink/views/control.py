@@ -1,5 +1,4 @@
 import os
-import requests
 from django.conf import settings
 
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest, HttpResponseServerError
@@ -13,14 +12,13 @@ from django import forms
 from caselink.models import *
 from caselink.tasks.common import *
 from caselink.tasks.polarion import sync_with_polarion
+from caselink.utils.maitai import CaseAddWorkflow, WorkflowException
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
 from djcelery.models import TaskMeta
 
 from caselink.form import MaitaiAutomationRequest
-
-import xml.etree.ElementTree as ET
 
 BASE_DIR = settings.BASE_DIR
 BACKUP_DIR = BASE_DIR + "/caselink/backups"
@@ -188,27 +186,14 @@ def upload(request):
 
 
 def create_maitai_request(request):
-    if not settings.CASELINK_MAITAI['ENABLE']:
-        reason = (
-            settings.CASELINK_MAITAI['REASON'] or 'Maitai disabled, please contact the admin.')
-        return JsonResponse({'message': reason}, status=400)
-
     maitai_request = MaitaiAutomationRequest(request.POST)
     if not maitai_request.is_valid():
         return JsonResponse({'message': "Invalid parameters"}, status=400)
 
     workitem_ids = maitai_request.cleaned_data['manual_cases'].split()
-    assignee = maitai_request.cleaned_data['assignee'].split()
+    #TODO: multiple assignee
+    assignee = maitai_request.cleaned_data['assignee'].split().pop()
     labels = maitai_request.cleaned_data['labels']
-
-    maitai_pass = settings.CASELINK_MAITAI['PASSWORD']
-    maitai_user = settings.CASELINK_MAITAI['USER']
-    maitai_url = settings.CASELINK_MAITAI['ADD-URL']
-
-    polarion_url = settings.CASELINK_POLARION['URL']
-    project = settings.CASELINK_POLARION['PROJECT']
-
-    parent_issue = settings.CASELINK_JIRA['PARENT_ISSUE']
 
     ret = {}
 
@@ -219,38 +204,15 @@ def create_maitai_request(request):
             ret[workitem_id] = {"message": "Workitem doesn't exists."}
             continue
 
-        #TODO: remove verify=False
-        res = requests.post(maitai_url, params={
-            "map_polarionId": workitem_id,
-            #TODO: config file
-            "map_polarionUrl": "%s/#/project/%s/workitem?id=%s" % (polarion_url, project, str(workitem_id)),
-            "map_polarionTitle": wi.title,
-            "map_issueAssignee": assignee[0],
-            "map_issueLabels": labels,
-            "map_parentIssueKey": parent_issue,
-        },
-            auth=(maitai_user, maitai_pass), verify=False)
+        workflow = CaseAddWorkflow(workitem_id, wi.title, assignee=assignee, label=labels)
+        try:
+            res = workflow.start()
+        except WorkflowException as error:
+            ret[workitem_id] = error.message
+        else:
+            wi.maitai_id = res['id']
+            wi.need_automation = True
 
-        if res.status_code != 200:
-            ret[workitem_id] = {'message': 'Maitai server internal error.'}
-            continue
-
-        root = ET.fromstring(res.content)
-
-        process = root.find('process-id').text
-        state = root.find('state').text
-        id = root.find('id').text
-        parentProcessInstanceId = root.find('parentProcessInstanceId').text
-        status = root.find('status').text
-
-        if status != 'SUCCESS':
-            ret[workitem_id] = {'message': 'Maitai server returns error.'}
-            continue
-
-        wi.maitai_id = id
-        wi.need_automation = True
-        wi.save()
-
-        ret[workitem_id] = {"maitai_id": id}
+        ret[workitem_id] = {"maitai_id": wi.maitai_id}
 
     return JsonResponse(ret, status=200)
