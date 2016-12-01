@@ -203,7 +203,10 @@ def create_maitai_request(request):
 
     maitai_pass = settings.CASELINK_MAITAI['PASSWORD']
     maitai_user = settings.CASELINK_MAITAI['USER']
-    maitai_url = settings.CASELINK_MAITAI['URL']
+    maitai_url = settings.CASELINK_MAITAI['ADD-URL']
+
+    polarion_url = settings.CASELINK_POLARION['URL']
+    project = settings.CASELINK_POLARION['PROJECT']
 
     ret = {}
 
@@ -218,7 +221,7 @@ def create_maitai_request(request):
         res = requests.post(maitai_url, params={
             "map_polarionId": workitem_id,
             #TODO: config file
-            "map_polarionUrl": "https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id=" + str(workitem_id),
+            "map_polarionUrl": "%s/#/project/%s/workitem?id=%s" % (polarion_url, project, str(workitem_id)),
             "map_polarionTitle": wi.title,
             "map_issueAssignee": assignee[0],
             "map_issueLabels": labels

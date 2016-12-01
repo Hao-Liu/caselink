@@ -147,7 +147,8 @@ CASELINK_MAITAI = {
     'ASSIGNEE': '',
     'USER': '',
     'PASSWORD': '',
-    'URL': '',
+    'ADD-URL': '',
+    'UPDATE-URL': '',
 }
 
 CASELINK_POLARION = {
@@ -157,6 +158,7 @@ CASELINK_POLARION = {
     'PROJECT': '',
     'SPACES': [],
     'REASON': 'Polarion support is disabled for now, please contract the admin.',
+    'URL': '',
 }
 
 CASELINK_JIRA = {

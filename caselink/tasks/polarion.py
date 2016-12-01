@@ -3,7 +3,10 @@ import difflib
 import datetime
 import HTMLParser
 import suds
+import requests
 from jira import JIRA
+
+import xml.etree.ElementTree as ET
 
 from django.core.exceptions import ObjectDoesNotExist
 import pytz
@@ -287,6 +290,8 @@ def filter_changes(changes):
 
 
 def add_jira_comment(jira_id, comment):
+    if not settings.CASELINK_JIRA['ENABLE']:
+        return False
     user = settings.CASELINK_JIRA['USER']
     password = settings.CASELINK_JIRA['PASSWORD']
     server = settings.CASELINK_JIRA['SERVER']
@@ -299,8 +304,33 @@ def add_jira_comment(jira_id, comment):
     jira.add_comment(jira.issue(id=jira_id), comment)
 
 
-def info_maitai_workitem_changed(wi_instance):
-    pass
+def info_maitai_workitem_changed(workitem, assignee=None, labels=None):
+    maitai_pass = settings.CASELINK_MAITAI['PASSWORD']
+    maitai_user = settings.CASELINK_MAITAI['USER']
+    maitai_url = settings.CASELINK_MAITAI['ADD-URL']
+    polarion_url = settings.CASELINK_POLARION['URL']
+    #TODO: remove verify=False
+    res = requests.post(maitai_url, params={
+        "map_polarionId": workitem.id,
+        "map_polarionUrl": "%s/#/project/%s/workitem?id=%s" % (polarion_url, PROJECT, str(workitem.id)),
+        "map_polarionTitle": workitem.title,
+        "map_issueAssignee": assignee[0],
+        "map_issueLabels": labels
+    },
+        auth=(maitai_user, maitai_pass), verify=False)
+
+    res.raise_for_status()
+
+    root = ET.fromstring(res.content)
+
+    process = root.find('process-id').text
+    state = root.find('state').text
+    id = root.find('id').text
+    parentProcessInstanceId = root.find('parentProcessInstanceId').text
+    status = root.find('status').text
+
+    workitem.maitai_id = id
+    workitem.need_automation = True
 
 
 @shared_task
@@ -426,13 +456,23 @@ def sync_with_polarion():
                         add_jira_comment(workitem.jira_id,
                                          comment="Caselink Changed: %s" % workitem_changes
                                          )
-                    else:
+                    elif not workitem.maitai_id:
                         info_maitai_workitem_changed(workitem)
-                else:
-                    if workitem.jira_id:
-                        add_jira_comment(workitem.jira_id,
-                                         comment="Caselink Changed: %s" % workitem_changes
-                                         )
+                    else:
+                        raise RuntimeError("Automated Workitem have a pending maitai progress")
+                elif workitem.automation != 'manualonly':
+                    if workitem.maitai_id:
+                        if workitem.jira_id:
+                            add_jira_comment(workitem.jira_id,
+                                             comment="Caselink Changed: %s" % workitem_changes
+                                             )
+                        else:
+                            raise RuntimeError("Not automated Workitem with a pending maitai progress don't have a JIRA task")
+                    else:
+                        if workitem.jira_id:
+                            add_jira_comment(workitem.jira_id,
+                                             comment="Caselink Changed: %s" % workitem_changes
+                                             )
 
             #TODO: use comfirmed as a standlone attribute
             workitem.comfirmed = workitem.updated
