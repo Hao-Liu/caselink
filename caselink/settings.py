@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 from __future__ import absolute_import
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
@@ -94,6 +96,14 @@ LOGGING = {
 
 WSGI_APPLICATION = 'caselink.wsgi.application'
 
+
+CELERYBEAT_SCHEDULE = {
+    # crontab(hour=0, minute=0, day_of_week='saturday')
+    'schedule-name': {
+        'task': 'caselink.tasks.common.test_task',
+        'schedule': crontab(hour='*/1', day_of_week='mon,tue,wed,thu,fri')
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
