@@ -1,5 +1,6 @@
 require("./lib/datatables-templates.js");
 var htmlify = require('./lib/htmlify.js');
+var p = require('./lib/sharedParameters.js');
 
 $(document).ready(function() {
   "use strict";
@@ -257,7 +258,7 @@ $(document).ready(function() {
       {
         "data": "polarion",
         "render": function( data ) {
-          return '<a href="https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id='+data+'">'+data+'</a>';
+          return `<a href="${p.get("polarionURL")}/polarion/#/project/${p.get('polarionDefaultProject')}/workitem?id=${data}">${data}</a><br>`;
         }
       },
       { "data": "title" },

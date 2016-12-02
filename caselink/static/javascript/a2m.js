@@ -1,5 +1,6 @@
 require("./lib/datatables-templates.js");
 var htmlify = require('./lib/htmlify.js');
+var p = require('./lib/sharedParameters.js');
 $(document).ready(function() {
   "use strict";
   var table = $('#sortable-table').DataSearchTable( {
@@ -36,7 +37,7 @@ $(document).ready(function() {
           var link = "";
           for (var i in data){
             var polarionId = data[i];
-            link += '<a href="https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id='+polarionId+'">'+polarionId+'</a><br>';
+            link += `<a href="${p.get("polarionURL")}/polarion/#/project/${p.get('polarionDefaultProject')}/workitem?id=${polarionId}">${polarionId}</a><br>`;
           }
           return link;
         }
