@@ -27,6 +27,7 @@ class WorkflowException(Exception):
 
 class Workflow(object):
     def __init__(self):
+        self.enable = False
         self.definition = ''
         self.version = ''
         self.params = {}
@@ -40,6 +41,8 @@ class Workflow(object):
             reason = (
                 MAITAI_REASON or 'Maitai disabled, please contact the admin.')
             raise WorkflowException(reason)
+        if not self.enable:
+            raise WorkflowException("Requested workflow is not enabled.")
 
         res = requests.post("%s/%s" % (self._gen_url(), 'start'), self.params,
                             auth=(MAITAI_USER, MAITAI_PASSWORD),
@@ -61,6 +64,7 @@ class Workflow(object):
 
 class CaseAddWorkflow(Workflow):
     def __init__(self, workitem_id, workitem_title, assignee=None, label=None, parent_issue=None):
+        self.enable = settings.CASELINK_MAITAI['CASEADD_ENABLE']
         self.definition = settings.CASELINK_MAITAI['CASEADD_DEFINITION']
         parent_issue = parent_issue or DEFAULT_PARENT_ISSUE
         assignee = assignee or DEFAULT_ASSIGNEE
@@ -78,6 +82,7 @@ class CaseAddWorkflow(Workflow):
 
 class CaseUpdateWorkflow(Workflow):
     def __init__(self, workitem_id, workitem_title, assignee=None, label=None, parent_issue=None):
+        self.enable = settings.CASELINK_MAITAI['CASEUPDATE_ENABLE']
         self.definition = settings.CASELINK_MAITAI['CASEUPDATE_DEFINITION']
         parent_issue = parent_issue or DEFAULT_PARENT_ISSUE
         assignee = assignee or DEFAULT_ASSIGNEE

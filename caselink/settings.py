@@ -162,6 +162,8 @@ CASELINK_MAITAI = {
 
     'SERVER': '',
     'DEPLOYMENT': '',
+    'CASEADD_ENABLE': False,
+    'CASEUPDATE_ENABLE': False,
     'CASEADD_DEFINITION': '',
     'CASEUPDATE_DEFINITION': '',
 }

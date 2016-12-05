@@ -308,10 +308,14 @@ def add_jira_comment(jira_id, comment):
 def info_maitai_workitem_changed(workitem, assignee=None, labels=None):
     workflow = CaseUpdateWorkflow(workitem.id, workitem.title,
                                   assignee=assignee, label=labels)
-    res = workflow.start()
+    try:
+        res = workflow.start()
+    except WorkflowException as error:
+        return False
 
     workitem.maitai_id = res['id']
     workitem.need_automation = True
+    return True
 
 
 @shared_task

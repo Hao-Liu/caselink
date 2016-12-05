@@ -201,18 +201,18 @@ def create_maitai_request(request):
         try:
             wi = WorkItem.objects.get(pk=workitem_id)
         except ObjectDoesNotExist:
-            ret[workitem_id] = {"message": "Workitem doesn't exists."}
+            ret.setdefault(workitem_id, {})['message'] = "Workitem doesn't exists."
             continue
 
         workflow = CaseAddWorkflow(workitem_id, wi.title, assignee=assignee, label=labels)
         try:
             res = workflow.start()
         except WorkflowException as error:
-            ret[workitem_id] = error.message
+            ret.setdefault(workitem_id, {})['message'] = error.message
         else:
             wi.maitai_id = res['id']
             wi.need_automation = True
 
-        ret[workitem_id] = {"maitai_id": wi.maitai_id}
+        ret.setdefault(workitem_id, {})['maitai_id'] = wi.maitai_id
 
     return JsonResponse(ret, status=200)
