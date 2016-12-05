@@ -13,7 +13,7 @@ from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
 from caselink import models
-from caselink.utils.maitai import CaseUpdateWorkflow, WorkflowException
+from caselink.utils.maitai import CaseUpdateWorkflow, WorkflowDisabledException
 
 from celery import shared_task, current_task
 
@@ -310,7 +310,7 @@ def info_maitai_workitem_changed(workitem, assignee=None, labels=None):
                                   assignee=assignee, label=labels)
     try:
         res = workflow.start()
-    except WorkflowException as error:
+    except WorkflowDisabledException as error:
         return False
 
     workitem.maitai_id = res['id']

@@ -21,6 +21,10 @@ MAITAI_ENABLE = settings.CASELINK_MAITAI['ENABLE']
 MAITAI_REASON = settings.CASELINK_MAITAI['REASON']
 
 
+class WorkflowDisabledException(Exception):
+    pass
+
+
 class WorkflowException(Exception):
     pass
 
@@ -40,9 +44,9 @@ class Workflow(object):
         if not MAITAI_ENABLE:
             reason = (
                 MAITAI_REASON or 'Maitai disabled, please contact the admin.')
-            raise WorkflowException(reason)
+            raise WorkflowDisabledException(reason)
         if not self.enable:
-            raise WorkflowException("Requested workflow is not enabled.")
+            raise WorkflowDisabledException("Requested workflow is not enabled.")
 
         res = requests.post("%s/%s" % (self._gen_url(), 'start'), self.params,
                             auth=(MAITAI_USER, MAITAI_PASSWORD),
@@ -71,7 +75,7 @@ class CaseAddWorkflow(Workflow):
         label = label or ''
         self.params = {
             "map_polarionId": workitem_id,
-            "map_polarionUrl": ("%s/#/project/%s/workitem?id=%s"
+            "map_polarionUrl": ("%s/polarion/#/project/%s/workitem?id=%s"
                                 % (POLARION_URL, PROJECT, workitem_id)),
             "map_polarionTitle": workitem_title,
             "map_issueAssignee": assignee,
@@ -89,7 +93,7 @@ class CaseUpdateWorkflow(Workflow):
         label = label or ''
         self.params = {
             "map_polarionId": workitem_id,
-            "map_polarionUrl": ("%s/#/project/%s/workitem?id=%s"
+            "map_polarionUrl": ("%s/polarion/#/project/%s/workitem?id=%s"
                                 % (POLARION_URL, PROJECT, workitem_id)),
             "map_polarionTitle": workitem_title,
             "map_issueAssignee": assignee,

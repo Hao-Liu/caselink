@@ -12,7 +12,7 @@ from django import forms
 from caselink.models import *
 from caselink.tasks.common import *
 from caselink.tasks.polarion import sync_with_polarion
-from caselink.utils.maitai import CaseAddWorkflow, WorkflowException
+from caselink.utils.maitai import CaseAddWorkflow, WorkflowDisabledException
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
@@ -207,7 +207,7 @@ def create_maitai_request(request):
         workflow = CaseAddWorkflow(workitem_id, wi.title, assignee=assignee, label=labels)
         try:
             res = workflow.start()
-        except WorkflowException as error:
+        except (WorkflowException, WorkflowDisabledException) as error:
             ret.setdefault(workitem_id, {})['message'] = error.message
         else:
             wi.maitai_id = res['id']
