@@ -1,6 +1,17 @@
 require("./lib/datatables-templates.js");
 var htmlify = require('./lib/htmlify.js');
 var p = require('./lib/sharedParameters.js');
+var Vue = require('vue');
+var navBar = require('./mixins/nav-bar.js');
+
+var vm = new Vue({
+  el: "#caselink",
+  mixins: [navBar],
+  data: {},
+  methods: {},
+  watch: {},
+  delimiters: ['${', '}'],
+});
 
 $(document).ready(function() {
   "use strict";
