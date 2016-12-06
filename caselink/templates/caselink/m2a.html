@@ -64,7 +64,6 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
-
 <div class="panel panel-default">
     <!-- Default panel contents -->
     <div class=""> <h3 align='center'>Manual to Auto Linkage Table</h3> </div>
@@ -92,34 +91,23 @@
         </tfoot>
     </table>
 </div>
-
-<div id="_proto_detail_panel" class="hidden">
-    <table class="table table-hover table-condensed">
-        <tbody>
-            <tr>
-                <td> Autotest Cases: </td>
-                <td class="detail-autocase"></td>
-            </tr>
-            <tr>
-                <td> Errors: </td>
-                <td class="detail-error"></td>
-            </tr>
-            <tr>
-                <td> Patterns: </td>
-                <td class="detail-pattern"></td>
-            </tr>
-            <tr>
-                <td> Maitai ID: </td>
-                <td class="detail-maitai"></td>
-            </tr>
-            <tr>
-                <td> Comment: </td>
-                <td class="detail-comment"></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
 {% endblock %}
+
 {% block footer %}
+<script type="text/x-template" id="m2a-child-row">
+    <div>
+        <div v-if="empty" class="alert alert-info" role="alert">Nothing to show.</div>
+        <table v-else class="table table-hover table-condensed">
+            <tbody>
+                <tr v-if="autocases" > <td> Autotest Cases: </td> <td> ${autocases} </td> </tr>
+                <tr v-if="errors" > <td> Errors: </td> <td> ${errors} </td> </tr>
+                <tr v-if="patterns" > <td> Patterns: </td> <td> ${patterns} </td> </tr>
+                <tr v-if="maitaiID" > <td> Maitai ID: </td> <td> ${maitaiID} </td> </tr>
+                <tr v-if="comment" > <td> Comment: </td> <td> ${comment} </td> </tr>
+                <tr v-if="jiraID" > <td> Comment: </td> <td> ${jiraID} </td> </tr>
+            </tbody>
+        </table>
+    </div>
+</script>
 <script src="{% static "dist/m2a.js" %}" type="text/javascript" charset="utf-8"></script>
 {% endblock %}

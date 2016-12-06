@@ -13,9 +13,13 @@ var vm = new Vue({
   delimiters: ['${', '}'],
 });
 
+var ChildRow = Vue.extend({
+  template: "#m2a-child-row",
+  delimiters: ['${', '}'],
+});
+
 $(document).ready(function() {
   "use strict";
-  var child_detail = $('#_proto_detail_panel').removeClass('hidden').detach();
   var linkage_modal = $('#linkage_modal');
   var linkage_list_item = $('.linkage-list-item').detach();
   var maitai_automation_modal = $("#maitai_automation_modal");
@@ -321,51 +325,38 @@ $(document).ready(function() {
 
     // Add event listener for opening and closing details
     childContent: function(row, child, slideDown, slideUp){
-      var head = child_detail.clone();
+      var filter_empty = function(value) {
+        return value !== null && Object.keys(value).length !== 0 && value;
+      };
       var d = row.data();
-
-      if(d.cases.length > 0){
-        head.find(".detail-autocase").html(d.cases.join("<br>"));
-      }
-      else{
-        head.find(".detail-autocase").closest("tr").remove();
-      }
-
-      if(d.errors.length > 0){
-        head.find(".detail-error").html(d.errors.join("<br>"));
-      }
-      else{
-        head.find(".detail-error").closest("tr").remove();
-      }
-
-      if(d.patterns.length > 0){
-        head.find(".detail-pattern").html(d.patterns.join("<br>"));
-      }
-      else{
-        head.find(".detail-pattern").closest("tr").remove();
-      }
-
-      if(d.maitai_id){
-        head.find(".detail-maitai").html(d.maitai_id);
-      }
-      else{
-        head.find(".detail-maitai").closest("tr").remove();
-      }
-
-      if(d.comment){
-        head.find(".detail-comment").html(d.comment);
-      }
-      else{
-        head.find(".detail-comment").closest("tr").remove();
-      }
-
-      if (d.patterns.length + d.errors.length + d.cases.length === 0 && !d.maitai_id && !d.comment) {
-        head.empty().append('<div class="alert alert-info" role="alert">Nothing to show.</div>');
-        setTimeout(slideUp, 800);
-      }
-
-      child.append(head.html());
-      slideDown();
+      var child_vm = new ChildRow({
+        el: child.get(0),
+        data: {
+          autocases: filter_empty(d.cases),
+          errors: filter_empty(d.errors),
+          patterns: filter_empty(d.patterns),
+          maitaiID: filter_empty(d.maitai_id),
+          comment: filter_empty(d.comment),
+          jiraID: filter_empty(d.jira_id)
+        },
+        computed: {
+          empty: function(){
+            for(var prop of ['autocases', 'errors', 'patterns', 'maitaiID', 'comment', 'jiraID']){
+              if(filter_empty(this[prop]) !== false){
+                return false;
+              }
+            }
+            return true;
+          }
+        },
+        mounted: function(){
+          slideDown();
+          if(this.empty){
+            setTimeout(slideUp, 800);
+          }
+        },
+        parent: vm
+      });
     },
   });
 });
