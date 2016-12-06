@@ -12,7 +12,7 @@ from django import forms
 from caselink.models import *
 from caselink.tasks.common import *
 from caselink.tasks.polarion import sync_with_polarion
-from caselink.utils.maitai import CaseAddWorkflow, WorkflowDisabledException
+from caselink.utils.maitai import CaseAddWorkflow, WorkflowDisabledException, WorkflowException
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
