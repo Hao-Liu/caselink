@@ -200,7 +200,7 @@ $(document).ready(function() {
               checkFlag = false;
               return;
             }
-            if(!d.need_automation){
+            if(!d.maitai_id){
               caseInput.val(caseInput.val() + " " +d.polarion);
               for(let docName of d.documents){
                 docName = docName.replace(/\ /g, "");
@@ -210,6 +210,7 @@ $(document).ready(function() {
               }
             }
             else{
+              checkFlag = false;
               alert('Error: ' + d.polarion + ': Maitai pending.');
             }
             if(!--count && checkFlag){

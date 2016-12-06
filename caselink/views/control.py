@@ -212,6 +212,7 @@ def create_maitai_request(request):
         else:
             wi.maitai_id = res['id']
             wi.need_automation = True
+        wi.save()
 
         ret.setdefault(workitem_id, {})['maitai_id'] = wi.maitai_id
 
