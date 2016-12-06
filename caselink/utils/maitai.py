@@ -75,6 +75,7 @@ class CaseAddWorkflow(Workflow):
         label = label or ''
         self.params = {
             "map_polarionId": workitem_id,
+            "map_polarionProject": PROJECT,
             "map_polarionUrl": ("%s/polarion/#/project/%s/workitem?id=%s"
                                 % (POLARION_URL, PROJECT, workitem_id)),
             "map_polarionTitle": workitem_title,
@@ -93,6 +94,7 @@ class CaseUpdateWorkflow(Workflow):
         label = label or ''
         self.params = {
             "map_polarionId": workitem_id,
+            "map_polarionProject": PROJECT,
             "map_polarionUrl": ("%s/polarion/#/project/%s/workitem?id=%s"
                                 % (POLARION_URL, PROJECT, workitem_id)),
             "map_polarionTitle": workitem_title,
