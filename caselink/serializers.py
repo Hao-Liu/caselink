@@ -10,7 +10,7 @@ class LinkageSerializer(serializers.ModelSerializer):
         for case in AutoCase.objects.all():
             if test_pattern_match(data, case.id):
                 return data
-            raise serializers.ValidationError("Pattern Invalid.")
+        raise serializers.ValidationError("Pattern Invalid.")
 
     class Meta:
         model = Linkage

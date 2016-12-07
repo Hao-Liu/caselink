@@ -269,16 +269,21 @@ def filter_changes(changes):
                         diffs.append(result_diff)
                     continue
 
-                if 'id' in before:
-                    before = before['id']
-                if 'id' in after:
-                    after = after['id']
-                if 'content' in before:
-                    before = convert_text(before['content'])
-                if 'content' in after:
-                    after = convert_text(after['content'])
-                before += '\n'
-                after += '\n'
+                # TODO: better way to handler this
+                if not isinstance(before, (str, unicode)):
+                    if 'id' in before:
+                        before = before['id']
+                    if 'content' in before:
+                        before = convert_text(before['content'])
+
+                if not isinstance(after, (str, unicode)):
+                    if 'id' in after:
+                        after = after['id']
+                    if 'content' in after:
+                        after = convert_text(after['content'])
+
+                if not (isinstance(before, (str, unicode)) and isinstance(after, (str, unicode))):
+                    continue
 
                 diff_txt = ''
                 for line in difflib.unified_diff(
@@ -444,7 +449,8 @@ def sync_with_polarion():
                     elif not workitem.maitai_id:
                         info_maitai_workitem_changed(workitem)
                     else:
-                        raise RuntimeError("Automated Workitem have a pending maitai progress")
+                        pass
+                        #raise RuntimeError("Automated Workitem have a pending maitai progress")
                 elif workitem.automation != 'manualonly':
                     if workitem.maitai_id:
                         if workitem.jira_id:
@@ -452,7 +458,8 @@ def sync_with_polarion():
                                              comment="Caselink Changed: %s" % workitem_changes
                                              )
                         else:
-                            raise RuntimeError("Not automated Workitem with a pending maitai progress don't have a JIRA task")
+                            pass
+                            #raise RuntimeError("Not automated Workitem with a pending maitai progress don't have a JIRA task")
                     else:
                         if workitem.jira_id:
                             add_jira_comment(workitem.jira_id,

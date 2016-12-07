@@ -34,6 +34,7 @@ module.exports = {
       return htmlify(value);
     },
     pollStatus: function(){
+      var that = this;
       $.ajax({
         'url':'control/',
         'cache': false
@@ -44,8 +45,8 @@ module.exports = {
           taskData.results = data.results;
         })
         .always(function(){
-          if(this.polling)
-            setTimeout(pollStatus, 1000);
+          if(that.polling)
+            setTimeout(that.pollStatus, 1000);
         });
     },
   },
