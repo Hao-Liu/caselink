@@ -7,6 +7,15 @@ from .models import *
 
 class LinkageSerializer(serializers.ModelSerializer):
     def validate_autocase_pattern(self, data):
+        # TODO: avoid creating new instead of deleting old
+        all_data = self.initial_data
+        linkage = Linkage.objects.filter(
+            autocase_pattern=data,
+            workitem=all_data['workitem']
+        )
+        if len(linkage) == 1:
+            linkage[0].delete()
+
         for case in AutoCase.objects.all():
             if test_pattern_match(data, case.id):
                 return data
