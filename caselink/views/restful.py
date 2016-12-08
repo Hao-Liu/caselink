@@ -75,8 +75,18 @@ class LinkageList(generics.ListCreateAPIView):
     filter_backends = (filters.DjangoFilterBackend,)
 
     def perform_create(self, serializer):
+        # TODO: avoid creating when duplicated
         instance = serializer.save()
         instance.autolink()
+
+        autocases = set(instance.autocases.all())
+        for other in instance.workitem.caselinks.all():
+            other_autocases = set(other.autocases.all())
+            if autocases > other_autocases:
+                other.delete()
+            if autocases < other_autocases:
+                instance.delete()
+                return
         instance.error_check(depth=1)
 
 
