@@ -266,19 +266,19 @@
     end_commit: null
     archs: ['x86_64']
     components: [libvirt]
-- model: caselink.caselink
+- model: caselink.linkage
   pk: 1
   fields: {workitem: DEVEL-1, autocase_pattern: a, framework: debug-framework}
-- model: caselink.caselink
+- model: caselink.linkage
   pk: 2
   fields: {workitem: DEVEL-2, autocase_pattern: b, framework: debug-framework}
-- model: caselink.caselink
+- model: caselink.linkage
   pk: 3
   fields: {workitem: DEVEL-3, autocase_pattern: c, framework: debug-framework}
-- model: caselink.caselink
+- model: caselink.linkage
   pk: 4
   fields: {workitem: DEVEL-4, autocase_pattern: d, framework: debug-framework}
-- model: caselink.caselink
+- model: caselink.linkage
   pk: 5
   fields: {workitem: DEVEL-4, autocase_pattern: e, framework: debug-framework}
 - model: caselink.bug
