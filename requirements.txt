@@ -1,6 +1,7 @@
 jira
 PyYAML
 requests
+celery<4.0
 django
 django-celery
 django-filter
