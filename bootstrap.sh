@@ -1,6 +1,6 @@
 #!/bin/bash
 
-USER="nobody"
+USER=$(whoami)
 FORCE_CLEAN="false"
 START_WORKER="false"
 SUDO_CMD="sudo -u $USER "
@@ -64,9 +64,8 @@ while [ "$1" != "" ]; do
         --worker )
             START_WORKER="true"
             ;;
-        --unsafe )
-            USER=$(whoami)
-            SUDO_CMD=""
+        --safe )
+            USER=nobody
             ;;
         * )
             echo "
