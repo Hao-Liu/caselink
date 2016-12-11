@@ -1,9 +1,16 @@
 import re
 import difflib
 import datetime
-import HTMLParser
 import suds
 import requests
+
+import sys
+
+if sys.version_info >= (3, 0):
+    from html.parser import HTMLParser
+else:
+    import HTMLParser
+
 import pytz
 from jira import JIRA
 
