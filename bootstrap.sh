@@ -3,12 +3,13 @@
 USER=$(whoami)
 FORCE_CLEAN="false"
 START_WORKER="false"
-SUDO_CMD="sudo -u $USER "
+SUDO_CMD="sudo -E -u $USER "
+PYTHON=$(which python)
 
 function clean_server()
 {
     # Reset environment and db
-    $SUDO_CMD python ./manage.py sqlflush | python ./manage.py dbshell
+    $SUDO_CMD $PYTHON ./manage.py sqlflush | $PYTHON ./manage.py dbshell
 
     rm -rf celerybeat-schedule db.sqlite3
 }
@@ -20,17 +21,17 @@ function setup_server()
     chown $USER caselink/backups celery_worker.log
 
     # Start initial database
-    $SUDO_CMD python ./manage.py migrate
+    $SUDO_CMD $PYTHON ./manage.py migrate
 
-    $SUDO_CMD python ./manage.py loaddata caselink/fixtures/initial_data.yaml
+    $SUDO_CMD $PYTHON ./manage.py loaddata caselink/fixtures/initial_data.yaml
 
     if [ -f caselink/fixtures/latest.yaml ]; then
-        $SUDO_CMD python ./manage.py loaddata caselink/fixtures/latest.yaml
+        $SUDO_CMD $PYTHON ./manage.py loaddata caselink/fixtures/latest.yaml
     else
-        $SUDO_CMD python ./manage.py loaddata caselink/fixtures/baseline.yaml
+        $SUDO_CMD $PYTHON ./manage.py loaddata caselink/fixtures/baseline.yaml
     fi
 
-    $SUDO_CMD python ./manage.py manualinit
+    $SUDO_CMD $PYTHON ./manage.py manualinit
 }
 
 
@@ -47,12 +48,12 @@ function run_celery(){
 
 function start_server()
 {
-    $SUDO_CMD python ./manage.py migrate
+    $SUDO_CMD $PYTHON ./manage.py migrate
 
-    $SUDO_CMD python ./manage.py loaddata caselink/fixtures/initial_data.yaml
+    $SUDO_CMD $PYTHON ./manage.py loaddata caselink/fixtures/initial_data.yaml
 
     # Run server
-    $SUDO_CMD python ./manage.py runserver 0.0.0.0:8888
+    $SUDO_CMD $PYTHON ./manage.py runserver 0.0.0.0:8888
 }
 
 
