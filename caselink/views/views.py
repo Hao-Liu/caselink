@@ -10,7 +10,6 @@ from caselink.serializers import *
 
 
 def a2m(request):
-    form = MaitaiAutomationRequest()
     return render(request, 'caselink/a2m.html')
 
 

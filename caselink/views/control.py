@@ -194,6 +194,7 @@ def create_maitai_request(request):
     #TODO: multiple assignee
     assignee = maitai_request.cleaned_data['assignee'].split().pop()
     labels = maitai_request.cleaned_data['labels']
+    parent_issue = maitai_request.cleaned_data['parent_issue']
 
     ret = {}
 
@@ -204,7 +205,8 @@ def create_maitai_request(request):
             ret.setdefault(workitem_id, {})['message'] = "Workitem doesn't exists."
             continue
 
-        workflow = CaseAddWorkflow(workitem_id, wi.title, assignee=assignee, label=labels)
+        workflow = CaseAddWorkflow(workitem_id, wi.title,
+                                   assignee=assignee, label=labels, parent_issue=parent_issue)
         try:
             res = workflow.start()
         except (WorkflowException, WorkflowDisabledException) as error:
