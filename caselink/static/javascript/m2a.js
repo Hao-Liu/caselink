@@ -1,4 +1,4 @@
-require("./lib/datatables-templates.js");
+var dtMixins = require("datatables-mixins");
 var htmlify = require('./lib/htmlify.js');
 var p = require('./lib/sharedParameters.js');
 var Vue = require('vue');
@@ -155,7 +155,7 @@ $(document).ready(function() {
 
   var table = $('#sortable-table').DataSearchTable({
     select: true,
-    BaseTable: [$.fn.DataTableWithChildRow, $.fn.DataTableWithInlineButton,],
+    BaseTable: [dtMixins.DataTableWithChildRow, dtMixins.DataTableWithInlineButton],
     buttons: [
       {
         text: 'Select All Filted',
