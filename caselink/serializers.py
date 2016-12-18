@@ -22,6 +22,7 @@ class LinkageSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError("Pattern Invalid.")
 
     class Meta:
+        fields = '__all__'
         model = Linkage
 
 
@@ -34,6 +35,7 @@ class WorkItemSerializer(serializers.ModelSerializer):
         return [link.autocase_pattern for link in wi.caselinks.all()]
 
     class Meta:
+        fields = '__all__'
         model = WorkItem
 
 
@@ -41,6 +43,7 @@ class AutoCaseSerializer(serializers.ModelSerializer):
     caselinks = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     failures = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
+        fields = '__all__'
         model = AutoCase
 
 
@@ -52,24 +55,29 @@ class WorkItemLinkageSerializer(serializers.ModelSerializer):
 
 class BugSerializer(serializers.ModelSerializer):
     class Meta:
+        fields = '__all__'
         model = Bug
 
 
 class AutoCaseFailureSerializer(serializers.ModelSerializer):
     class Meta:
+        fields = '__all__'
         model = AutoCaseFailure
 
 
 class FrameworkSerializer(serializers.ModelSerializer):
     class Meta:
+        fields = '__all__'
         model = Framework
 
 
 class ComponentSerializer(serializers.ModelSerializer):
     class Meta:
+        fields = '__all__'
         model = Component
 
 
 class ArchSerializer(serializers.ModelSerializer):
     class Meta:
+        fields = '__all__'
         model = Arch
