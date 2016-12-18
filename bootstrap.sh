@@ -35,14 +35,12 @@ function setup_server()
 }
 
 
-function run_celery(){
+function rerun_celery(){
     #TODO use a better way to stop celery workers.
     pkill -f celery
 
-    sudo systemctl restart rabbitmq-server
-
-    # Start celery worker
-    $SUDO_CMD celery worker -A caselink -n localhost -l info -f celery_worker.log --purge --detach
+    echo "Rnning celery worker, logging in celery_worker.log"
+    $SUDO_CMD $PYTHON -m celery worker -A caselink -n localhost -l info -f celery_worker.log --purge --detach
 }
 
 
@@ -84,7 +82,7 @@ if [[ "$FORCE_CLEAN" == "true" ]]; then
 fi
 
 if [[ "$START_WORKER" == "true" ]]; then
-    run_celery
+    rerun_celery
 fi
 
 start_server
