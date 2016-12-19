@@ -1,5 +1,6 @@
 from django import forms
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 from .models import WorkItem
 
@@ -23,6 +24,16 @@ class MaitaiAutomationRequest(forms.Form):
     def clean(self):
         cleaned_data = super(MaitaiAutomationRequest, self).clean()
         labels = cleaned_data.get("labels")
+        manual_cases = cleaned_data.get("manual_cases")
+
+        for manual_case in manual_cases.split():
+            try:
+                wi = WorkItem.objects.get(id=manual_case)
+                if wi.maitai_id:
+                    self.add_error('manual_cases', '%s already have a pending request' % manual_case)
+            except ObjectDoesNotExist:
+                self.add_error('manual_cases', '%s is not a valid manual case' % manual_case)
+
 
         if " " in labels:
             msg = "Space not allowed in labels."
