@@ -175,131 +175,95 @@ def filter_changes(changes):
     Filter out irrelevant changes, return a list of dict.
     """
 
-    def convert_text(text):
+    def _convert_text(text):
         lines = re.split(r'\<[bB][rR]/\>', text)
         new_lines = []
         for line in lines:
             line = " ".join(line.split())
-            line = line.strip()
-            if not line:
-                continue
-            line = HTMLParser.HTMLParser().unescape(line)
-            new_lines.append(line)
+            if line:
+                line = HTMLParser.HTMLParser().unescape(line)
+                new_lines.append(line)
         return '\n'.join(new_lines)
 
     def diff_test_steps(before, after):
-        if before:
-            steps_before = before['steps']['TestStep']
-            if not isinstance(steps_before, list):
-                steps_before = [steps_before]
-        else:
-            steps_before = []
-        if after:
-            steps_after = after['steps']['TestStep']
-            if not isinstance(steps_after, list):
-                steps_after = [steps_after]
-        else:
-            steps_after = []
+        """Will break if steps are not in a two columns table (Step, Result)"""
+        def _get_steps_for_diff(data):
+            ret = []
+            if not data:
+                return ret
+            else:
+                steps = data.get('steps', {}).get('TestStep', [])
+                if not isinstance(steps, list):
+                    steps = [steps]
+                for idx, raw_step in enumerate(steps):
+                    step, result = [
+                        _convert_text(text['content'])
+                        for text in raw_step['values']['Text']]
+                    ret.extend([
+                        "Step:",
+                        step or ",<empty>",
+                        "Expected result:",
+                        result or "<empty>",
+                    ])
+            return ret
 
-        diff_txt = ''
-        if len(steps_before) == len(steps_after):
-            for idx in range(len(steps_before)):
-                if steps_before:
-                    step_before, result_before = [
-                        convert_text(text['content'])
-                        for text in steps_before[idx].get('values', {}).get('Text', '')]
-                else:
-                    step_before = result_before = ''
-                if steps_after:
-                    step_after, result_after = [
-                        convert_text(text['content'])
-                        for text in steps_after[idx].get('values', {}).get('Text', '')]
-                else:
-                    step_after = result_after = ''
-                if step_before != step_after:
-                    diff_txt += 'Step %s changed:\n' % (idx + 1)
-                    for line in difflib.unified_diff(step_before.splitlines(1),
-                                                     step_after.splitlines(1)):
-                        diff_txt += line
-                    diff_txt += '\n'
-                if result_before != result_after:
-                    diff_txt += 'Result %s changed:\n' % (idx + 1)
-                    for line in difflib.unified_diff(result_before.splitlines(1),
-                                                     result_after.splitlines(1)):
-                        diff_txt += line
-                    diff_txt += '\n'
-        else:
-            diff_txt = ('Steps count changed %s --> %s' %
-                        (len(steps_before), len(steps_after)))
+        steps_before, steps_after = _get_steps_for_diff(before), _get_steps_for_diff(after)
+
+        diff_txt = '\n'.join(difflib.unified_diff(steps_before, steps_after))
+
         return diff_txt
 
-    diffs = []
+    summary = ""
     for change in changes:
-        for diff in change['diffs']['item']:
-            field = diff['fieldName']
-            # Ignore irrelevant properties changing
-            if field in [
-                    'updated', 'outlineNumber', 'caseautomation', 'status',
-                    'previousStatus', 'approvals', 'tcmscaseid', 'caseimportance']:
+        creation = change['creation']
+        empty = change['empty']
+        invalid = change['invalid']
+        date = change['date']
+        diffs = change['diffs']
+        revision = change['revision']
+        user = change['user']
+
+        if creation:
+            summary += "User %s create this workitem at %s\n" % (user, date)
+            if empty:
                 continue
 
-            # Ignore parent item changing
-            if (field == 'linkedWorkItems' and
-                    diff['added'] and diff['removed'] and
-                    len(diff['added']['item']) == 1 and
-                    len(diff['removed']['item']) == 1 and
-                    diff['added']['item'][0]['role']['id'] == 'parent' and
-                    diff['removed']['item'][0]['role']['id'] == 'parent'):
-                continue
+        if diffs:
+            for diff in diffs['item']:
+                before = diff.get('before', None)
+                after = diff.get('after', None)
+                field = diff['fieldName']
 
-            result_diff = {'field': field, 'added': [], 'removed': [],
-                           'changed': ''}
-
-            if diff['added']:
-                adds = diff['added']['item']
-                for add in adds:
-                    result_diff['added'].append(add)
-
-            if diff['removed']:
-                removes = diff['removed']['item']
-                for remove in removes:
-                    result_diff['removed'].append(remove)
-
-            if 'before' in diff or 'after' in diff:
-                before = diff.get('before', '')
-                after = diff.get('after', '')
+                # Ignore irrelevant properties changing
+                if field not in ['testSteps', 'teardown', 'setup', 'environment', 'description']:
+                    continue
 
                 if field == 'testSteps':
-                    step_change = diff_test_steps(before, after)
-                    if step_change:
-                        result_diff['changed'] = diff_test_steps(before, after)
-                        diffs.append(result_diff)
+                    summary += "User %s changed test steps at %s:\n%s\n" % (user, date, diff_test_steps(before, after))
                     continue
 
-                # TODO: better way to handler this
-                if not isinstance(before, (str, unicode)):
-                    if 'id' in before:
-                        before = before['id']
-                    if 'content' in before:
-                        before = convert_text(before['content'])
+                else:
+                    def _get_text_content(data):
+                        if not data:
+                            return ''
+                        elif not isinstance(data, (str, unicode)):
+                            if 'id' in data: # It'a Enum?
+                                data = data['id']
+                            elif 'content' in data: # It's a something else...
+                                data = _convert_text(data['content'])
+                        return data
 
-                if not isinstance(after, (str, unicode)):
-                    if 'id' in after:
-                        after = after['id']
-                    if 'content' in after:
-                        after = convert_text(after['content'])
+                    before, after = _get_text_content(before), _get_text_content(after)
 
-                if not (isinstance(before, (str, unicode)) and isinstance(after, (str, unicode))):
-                    continue
+                    if not before or not after:
+                        summary += "User %s changed %s at %s, details not avaliable\n" % (user, field, date)
+                        continue
 
-                diff_txt = ''
-                for line in difflib.unified_diff(
-                        before.splitlines(1),
-                        after.splitlines(1)):
-                    diff_txt += line
-                result_diff['changed'] = diff_txt
-                diffs.append(result_diff)
-    return diffs
+                    else:
+                        detail_diff = ''.join(
+                            difflib.unified_diff(before.splitlines(True), after.splitlines(True)))
+                        summary += "User %s changed %s at %s:\n%s\n" % (user, date, field, detail_diff)
+    return summary
 
 
 def add_jira_comment(jira_id, comment):
