@@ -56,20 +56,21 @@ def _get_running_tasks_status():
     return task_status
 
 
-def _cancel_task():
+def _cancel_task(task_id=None):
     task_status = {}
-    tasks = _get_tasks()
-    if not tasks:
+    worker_tasks = _get_tasks()
+    if not worker_tasks:
         return {}
-    for worker, tasks in _get_tasks():
+    for worker, tasks in worker_tasks:
         for task in tasks:
             res = AsyncResult(task['id'])
             task_status[task['name']] = {
                 'state': res.state,
                 'meta': res.info
             }
-            res.revoke(terminate=True)
-            task_status[task['name']]['canceled'] = True
+            if not task_id or task_id == task['id']:
+                res.revoke(terminate=True)
+                task_status[task['name']]['canceled'] = True
     return task_status
 
 
