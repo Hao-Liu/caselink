@@ -1,4 +1,5 @@
 import logging
+
 import django_filters
 from rest_framework import filters
 
@@ -12,6 +13,10 @@ from rest_framework import status
 
 from caselink.models import *
 from caselink.serializers import *
+from caselink.utils.jira import add_jira_comment
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 # Standard RESTful APIs
@@ -32,7 +37,16 @@ class WorkItemDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         instance = serializer.save()
+        if instance.changes and instance.jira_id:
+            try:
+                if add_jira_comment(instance.jira_id, instance.changes):
+                    instance.changes = None
+                    instance.save()
+            except Exception as error:
+                LOGGER.error("Failed to add comment for WI %s, Jira task %s",
+                             instance.id, instance.jira_id)
         instance.error_check(depth=1)
+
 
     def perform_destroy(self, instance):
         related = instance.get_related()
