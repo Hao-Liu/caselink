@@ -411,14 +411,15 @@ def sync_with_polarion():
             workitem.automation = wi.get('automation', workitem.automation)
 
             if workitem_changes:
-                workitem.changes = workitem_changes
                 if workitem.automation == 'automated':
                     if workitem.jira_id:
                         add_jira_comment(workitem.jira_id,
                                          comment="Caselink Changed: %s" % workitem_changes
                                          )
-                    elif not workitem.maitai_id:
+                    if not workitem.maitai_id:
                         info_maitai_workitem_changed(workitem)
+                        # Mark as changed on caselink
+                        workitem.changes = workitem_changes
                     else:
                         pass
                         #raise RuntimeError("Automated Workitem have a pending maitai progress")
@@ -429,13 +430,17 @@ def sync_with_polarion():
                                              comment="Caselink Changed: %s" % workitem_changes
                                              )
                         else:
-                            pass
+                            # Mark as changed on caselink
+                            workitem.changes = workitem_changes
                             #raise RuntimeError("Not automated Workitem with a pending maitai progress don't have a JIRA task")
                     else:
                         if workitem.jira_id:
                             add_jira_comment(workitem.jira_id,
                                              comment="Caselink Changed: %s" % workitem_changes
                                              )
+                        else:
+                            # Just a normal, not automated test case, do nothing
+                            pass
 
             #TODO: use comfirmed as a standlone attribute
             workitem.comfirmed = workitem.updated
