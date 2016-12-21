@@ -19,7 +19,8 @@ class MaitaiAutomationRequest(forms.Form):
     labels = forms.CharField(
         label='Labels on JIRA, split by comma', max_length=1023, required=False)
     parent_issue = forms.CharField(
-        label='Parent on JIRA, default is None', max_length=1023, required=False)
+        label='Parent on JIRA, default is None', max_length=1023, required=False,
+        initial=settings.CASELINK_MAITAI['PARENT_ISSUE'])
 
     def clean(self):
         cleaned_data = super(MaitaiAutomationRequest, self).clean()
