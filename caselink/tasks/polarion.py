@@ -262,7 +262,7 @@ def filter_changes(changes):
                     else:
                         detail_diff = ''.join(
                             difflib.unified_diff(before.splitlines(True), after.splitlines(True)))
-                        summary += "User %s changed %s at %s:\n%s\n" % (user, date, field, detail_diff)
+                        summary += "User %s changed %s at %s:\n%s\n" % (user, field, date, detail_diff)
     return summary
 
 
