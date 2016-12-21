@@ -347,6 +347,9 @@ $(document).ready(function() {
               }
             }
             return true;
+          },
+          jiraURL: function(){
+            return `${p.get("jiraURL")}/browse/${this.jiraID}`;
           }
         },
         mounted: function(){

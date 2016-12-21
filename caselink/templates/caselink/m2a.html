@@ -104,7 +104,7 @@
                 <tr v-if="patterns" > <td> Patterns: </td> <td> ${patterns} </td> </tr>
                 <tr v-if="maitaiID" > <td> Maitai ID: </td> <td> ${maitaiID} </td> </tr>
                 <tr v-if="comment" > <td> Comment: </td> <td> ${comment} </td> </tr>
-                <tr v-if="jiraID" > <td> Comment: </td> <td> ${jiraID} </td> </tr>
+                <tr v-if="jiraID" > <td> JIRA: </td> <td> <a v-bind:href="jiraURL">${jiraID}</a> </td> </tr>
             </tbody>
         </table>
     </div>
