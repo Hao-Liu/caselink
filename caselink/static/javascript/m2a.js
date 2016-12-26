@@ -155,7 +155,7 @@ $(document).ready(function() {
 
   var table = $('#sortable-table').DataSearchTable({
     select: true,
-    BaseTable: [dtMixins.DataTableWithChildRow, dtMixins.DataTableWithInlineButton],
+    BaseTable: [dtMixins.DataTableWithChildRow, dtMixins.DataTableWithInlineButton, dtMixins.DataTableJumpPageButton],
     buttons: [
       {
         text: 'Select All Filted',

@@ -16,6 +16,7 @@ var vm = new Vue({
 $(document).ready(function() {
   "use strict";
   var table = $('#sortable-table').DataSearchTable( {
+    BaseTable: [dtMixins.DataTableJumpPageButton],
     "ajax": "data?type=a2m",
     "iDisplayLength": 20,
     "bAutoWidth": false,
