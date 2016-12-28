@@ -58,19 +58,19 @@ $(document).ready(function() {
       {
         "data": "title",
         "render": function(data){
-          return htmlify(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       {
         "data": "documents",
         "render": function(data){
-          return htmlify(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       {
         "data": "components",
         "render": function(data){
-          return htmlify(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       {
@@ -83,7 +83,7 @@ $(document).ready(function() {
       {
         "data": "errors",
         "render": function(data){
-          return htmlify(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
     ],
