@@ -154,6 +154,7 @@ CASELINK_MAITAI = {
     'PASSWORD': '',
     'ENABLE': False,
     'REASON': 'Maitai haven\'t implemented the workflow we needed yet.',
+    'DEFAULT_LABEL': 'libvirt-agile',
     'DEFAULT_ASSIGNEE': '',
     'PARENT_ISSUE': '',
 

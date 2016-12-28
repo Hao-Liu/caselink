@@ -110,9 +110,13 @@ $(document).ready(function() {
     linkage_item.remove();
   });
 
+  var form = maitai_automation_modal.find('form');
+  var caseInput = maitai_automation_modal.find("input[name='manual_cases']");
+  var labelInput = maitai_automation_modal.find("input[name='labels']");
+  var labelDefault = labelInput.val();
+
   $("#maitai_automation_submit").click(function(){
     var button = $(this);
-    var form = maitai_automation_modal.find('form');
     var posting = $.post("/control/maitai_request/", form.serialize());
     button.prop('disabled', true);
     var polarion;
@@ -201,11 +205,9 @@ $(document).ready(function() {
         text: 'Create Automated Request',
         action: function ( e, dt, node, config ) {
           var filterSet = table.$('tr', {selected:true});
-          var caseInput = maitai_automation_modal.find("input[name='manual_cases']");
-          var labelInput = maitai_automation_modal.find("input[name='labels']");
           var checkFlag = true;
           caseInput.val('');
-          labelInput.val('');
+          labelInput.val(labelDefault);
           var count = filterSet.length;
           filterSet.each(function(){
             var row = table.row(this);
@@ -220,7 +222,7 @@ $(document).ready(function() {
               for(let docName of d.documents){
                 docName = docName.replace(/\ /g, "");
                 if(labelInput.val().indexOf(docName) === -1){
-                  labelInput.val((labelInput.val()? "," : "") + docName);
+                  labelInput.val((labelInput.val()? labelInput.val() + "," : "") + docName);
                 }
               }
             }

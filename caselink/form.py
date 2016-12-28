@@ -17,7 +17,8 @@ class MaitaiAutomationRequest(forms.Form):
         label='Assignee on JIRA', required=True, choices=assignee_list,
         initial=settings.CASELINK_DEFAULT_ASSIGNEE)
     labels = forms.CharField(
-        label='Labels on JIRA, split by comma', max_length=1023, required=False)
+        label='Labels on JIRA, split by comma', max_length=1023, required=False,
+        initial=settings.CASELINK_MAITAI['DEFAULT_LABEL'])
     parent_issue = forms.CharField(
         label='Parent on JIRA, default is None', max_length=1023, required=False,
         initial=settings.CASELINK_MAITAI['PARENT_ISSUE'])
