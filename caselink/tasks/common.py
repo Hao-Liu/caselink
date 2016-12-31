@@ -50,7 +50,7 @@ def init_linkage():
 def update_linkage_error(link=None):
     """Check for errors in linkage"""
     if not link:
-        links = CaseLink.objects.all()
+        links = Linkage.objects.all()
     else:
         links = [link]
 
@@ -110,11 +110,14 @@ def update_autocase_error(case=None):
 
 @shared_task
 def dump_all_db():
-    #TODO Base dir
+    """
+    Dump all models except Error.
+    """
+    # TODO: hardcoded BASE_DIR
     filename = BASE_DIR + "/" + str(datetime.datetime.now().isoformat()) + ".yaml"
     with open(filename, 'w+') as base_fp:
-        for model in [Error, Framework, Project, Document, Component, Arch, #Meta models
-                      WorkItem, AutoCase, CaseLink, Bug, AutoCaseFailure]:
+        for model in [Framework, Project, Document, Component, Arch, #Meta models
+                      WorkItem, AutoCase, Linkage, Bug, AutoCaseFailure]:
             base_fp.write(serializers.serialize('yaml', model.objects.all(), fields=model._min_dump))
 
 
@@ -130,9 +133,12 @@ def restore_all_db(filename):
 @shared_task
 @transaction.atomic
 def clean_all_db():
+    """
+    Clean all models except Error.
+    """
     for model in [
-            Component, Arch, AutoCase, AutoCaseFailure, Bug, CaseLink, WorkItem,
-            Document, Project, Framework, Error]:
+            Component, Arch, AutoCase, AutoCaseFailure, Bug, Linkage, WorkItem,
+            Document, Project, Framework]:
         model.objects.all().delete()
 
 
@@ -174,7 +180,7 @@ def save_autocase_db(filename):
 
 
 def save_caselink_db(filename):
-    _save_db(filename, CaseLink)
+    _save_db(filename, Linkage)
 
 
 def save_bug_db(filename):

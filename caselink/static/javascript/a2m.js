@@ -1,28 +1,45 @@
+var dtMixins = require("datatables-mixins");
+var htmlify = require('./lib/htmlify.js');
+var p = require('./lib/sharedParameters.js');
+var Vue = require('vue');
+var navBar = require('./mixins/nav-bar.js');
+
+var vm = new Vue({
+  el: "#caselink",
+  mixins: [navBar],
+  data: {},
+  methods: {},
+  watch: {},
+  delimiters: ['${', '}'],
+});
+
 $(document).ready(function() {
+  "use strict";
   var table = $('#sortable-table').DataSearchTable( {
+    BaseTable: [dtMixins.DataTableJumpPageButton],
     "ajax": "data?type=a2m",
     "iDisplayLength": 20,
     "bAutoWidth": false,
     "selectorColumns": [
       {
         column: 'Component',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'Framework',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'Documents',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'PR',
-        render: prettier,
+        render: htmlify,
       },
       {
         column: 'Errors',
-        render: prettier,
+        render: htmlify,
       }
     ],
     "columns": [
@@ -30,10 +47,10 @@ $(document).ready(function() {
       {
         "data": "polarion",
         "render": function(data) {
-          link = ""
-          for (i in data){
-            polarion_id = data[i];
-            link += '<a href="https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id='+polarion_id+'">'+polarion_id+'</a><br>';
+          var link = "";
+          for (var i in data){
+            var polarionId = data[i];
+            link += `<a href="${p.get("polarionURL")}/polarion/#/project/${p.get('polarionDefaultProject')}/workitem?id=${polarionId}">${polarionId}</a><br>`;
           }
           return link;
         }
@@ -41,19 +58,19 @@ $(document).ready(function() {
       {
         "data": "title",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       {
         "data": "documents",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       {
         "data": "components",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
       {
@@ -61,12 +78,12 @@ $(document).ready(function() {
       },
       {
         "data": "pr",
-        "render":  prettier
+        "render":  htmlify
       },
       {
         "data": "errors",
         "render": function(data){
-          return prettier(data.join('<br>'));
+          return htmlify(data.join('\n'));
         }
       },
     ],

@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 from __future__ import absolute_import
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
@@ -70,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'caselink.utils.settings_inject.settings_inject',
             ],
         },
     },
@@ -94,17 +97,21 @@ LOGGING = {
 WSGI_APPLICATION = 'caselink.wsgi.application'
 
 
+CELERYBEAT_SCHEDULE = {
+    # crontab(hour=0, minute=0, day_of_week='saturday')
+    'schedule-name': {
+        'task': 'caselink.tasks.common.test_task',
+        'schedule': crontab(hour='*/1', day_of_week='mon,tue,wed,thu,fri')
+    },
+}
+
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db.sqlite3',
     }
 }
 
@@ -129,30 +136,54 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 FIXTURE_DIRS = [
-        'caselink/fixture/'
-        ]
+    'caselink/fixture/'
+]
 
 REST_FRAMEWORK = {
-        'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
-        'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-        'PAGE_SIZE': 100,
+    'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
 }
 
 CASELINK = {
+    '401_ON_INVALID_PATTERN': False,
 }
 
 CASELINK_MAITAI = {
-    'ENABLE': False,
-    'REASON': 'Maitai haven\'t implemented the workflow we needed yet.',
-    'ASSIGNEE': '',
     'USER': '',
     'PASSWORD': '',
-    'URL': '',
+    'ENABLE': False,
+    'REASON': 'Maitai haven\'t implemented the workflow we needed yet.',
+    'DEFAULT_LABEL': 'libvirt-agile',
+    'DEFAULT_ASSIGNEE': '',
+    'PARENT_ISSUE': '',
+
+    'SERVER': '',
+    'DEPLOYMENT': '',
+    'CASEADD_ENABLE': False,
+    'CASEUPDATE_ENABLE': False,
+    'CASEADD_DEFINITION': '',
+    'CASEUPDATE_DEFINITION': '',
 }
 
 CASELINK_POLARION = {
+    # 'URL': URL is in pylarion
     'ENABLE': False,
+    # Parameters for Polarion workitem fetching
+    'PROJECT': '',
+    'SPACES': [],
     'REASON': 'Polarion support is disabled for now, please contract the admin.',
+    'URL': '',
+}
+
+CASELINK_JIRA = {
+    # 'URL': URL is in pylarion
+    'ENABLE': False,
+    'USER': '',
+    # Parameters for Polarion workitem fetching
+    'PASSWORD': '',
+    'SERVER': '',
+    'PARENT_ISSUE': '',
 }
 
 CASELINK_MEMBERS = ('member1 member2')
@@ -162,4 +193,3 @@ try:
     from caselink.settings_instance import *
 except ImportError:
     print("Instance setting not found.")
-

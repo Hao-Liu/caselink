@@ -10,7 +10,6 @@ from caselink.serializers import *
 
 
 def a2m(request):
-    form = MaitaiAutomationRequest()
     return render(request, 'caselink/a2m.html')
 
 
@@ -22,6 +21,20 @@ def m2a(request):
 def index(request):
     return render(request, 'caselink/index.html')
 
+def pattern_matcher(request, pattern=''):
+    ret = []
+    def _collect_case(test_case):
+        if test_pattern_match(pattern, test_case.id):
+            ret.append(test_case.id)
+            if len(ret) > 100:
+                return False
+        return True
+
+    for offset in xrange(0, AutoCase.objects.all().count(), 1000):
+        for case in AutoCase.objects.all()[offset:offset + 1000]:
+            if not _collect_case(case):
+                return JsonResponse({"cases": ret})
+    return JsonResponse({"cases": ret})
 
 def data(request):
     #TODO: sql too redundant
@@ -45,13 +58,14 @@ def data(request):
         caselink_autocase.id AS "case",
         caselink_autocase.pr AS "pr",
         caselink_autocase.framework_id AS "framework",
-        caselink_caselink.title as "title",
-        caselink_caselink.workitem_id as "polarion"
+        caselink_workitem.title as "title",
+        caselink_linkage.workitem_id as "polarion"
         from
-        ((
+        (((
         caselink_autocase
-        left join caselink_caselink_autocases on caselink_autocase.id = caselink_caselink_autocases.autocase_id)
-        left join caselink_caselink on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
+        left join caselink_linkage_autocases on caselink_autocase.id = caselink_linkage_autocases.autocase_id)
+        left join caselink_linkage on caselink_linkage_autocases.linkage_id = caselink_linkage.id)
+        left join caselink_workitem on caselink_linkage.workitem_id = caselink_workitem.id)
         order by "case"
         """
         cursor.execute(sql)
@@ -122,9 +136,9 @@ def data(request):
             from
             (((
             caselink_autocase
-            inner join caselink_caselink_autocases on caselink_autocase.id = caselink_caselink_autocases.autocase_id)
-            left join caselink_caselink on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
-            inner join caselink_workitem_documents on caselink_workitem_documents.workitem_id = caselink_caselink.workitem_id)
+            inner join caselink_linkage_autocases on caselink_autocase.id = caselink_linkage_autocases.autocase_id)
+            left join caselink_linkage on caselink_linkage_autocases.linkage_id = caselink_linkage.id)
+            inner join caselink_workitem_documents on caselink_workitem_documents.workitem_id = caselink_linkage.workitem_id)
             order by "case";
             """
         )
@@ -145,17 +159,19 @@ def data(request):
         caselink_workitem.title AS "title",
         caselink_workitem.automation AS "automation",
         caselink_workitem.need_automation AS "need_automation",
+        caselink_workitem.comment AS "comment",
         caselink_workitem.maitai_id AS "maitai_id",
-        caselink_caselink_autocases.autocase_id as "cases",
-        caselink_caselink.autocase_pattern as "patterns",
+        caselink_workitem.jira_id AS "jira_id",
+        caselink_linkage_autocases.autocase_id as "cases",
+        caselink_linkage.autocase_pattern as "patterns",
         caselink_error.message as "errors"
         from
         ((((
         caselink_workitem
-        left join caselink_caselink on caselink_caselink.workitem_id = caselink_workitem.id)
-        left join caselink_caselink_errors on caselink_caselink_errors.caselink_id = caselink_caselink.id)
-        left join caselink_error on caselink_error.id = caselink_caselink_errors.error_id)
-        left join caselink_caselink_autocases on caselink_caselink_autocases.caselink_id = caselink_caselink.id)
+        left join caselink_linkage on caselink_linkage.workitem_id = caselink_workitem.id)
+        left join caselink_linkage_errors on caselink_linkage_errors.linkage_id = caselink_linkage.id)
+        left join caselink_error on caselink_error.id = caselink_linkage_errors.error_id)
+        left join caselink_linkage_autocases on caselink_linkage_autocases.linkage_id = caselink_linkage.id)
         where caselink_workitem.type <> 'heading' %s
         order by "polarion"
         """
@@ -177,6 +193,8 @@ def data(request):
                     'automation': workitem['automation'],
                     'need_automation': workitem['need_automation'],
                     'maitai_id': workitem['maitai_id'],
+                    'jira_id': workitem['jira_id'],
+                    'comment': workitem['comment'],
                     'patterns': [],
                     'cases': [],
 

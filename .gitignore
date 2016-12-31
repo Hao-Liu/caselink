@@ -62,3 +62,4 @@ caselink/backups
 caselink/fixtures/latest.yaml
 
 .virtenv/
+node_modules/

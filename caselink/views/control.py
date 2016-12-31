@@ -1,5 +1,4 @@
 import os
-import requests
 from django.conf import settings
 
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest, HttpResponseServerError
@@ -13,14 +12,13 @@ from django import forms
 from caselink.models import *
 from caselink.tasks.common import *
 from caselink.tasks.polarion import sync_with_polarion
+from caselink.utils.maitai import CaseAddWorkflow, WorkflowDisabledException, WorkflowException
 
 from celery.task.control import inspect
 from celery.result import AsyncResult
 from djcelery.models import TaskMeta
 
 from caselink.form import MaitaiAutomationRequest
-
-import xml.etree.ElementTree as ET
 
 BASE_DIR = settings.BASE_DIR
 BACKUP_DIR = BASE_DIR + "/caselink/backups"
@@ -37,39 +35,42 @@ def _get_finished_tasks_results(number):
     task_metas = TaskMeta.objects.order_by('-date_done')[0:number-1]
     for i in task_metas:
         ret.append(i.to_dict())
-        ret[-1]['result'] = str(ret[-1]['result'])
+        ret[-1]['result'] = "%s" % ret[-1]['result']
     return ret
 
 
 def _get_running_tasks_status():
-    task_status = {}
+    task_status = []
     _tasks = _get_tasks()
     if not _tasks:
         return {}
     for worker, tasks in _tasks:
         for task in tasks:
             res = AsyncResult(task['id'])
-            task_status[task['name']] = {
+            task_status.append({
+                'name': task['name'],
+                'id': task['id'],
                 'state': res.state,
                 'meta': res.info
-            }
+            })
     return task_status
 
 
-def _cancel_task():
+def _cancel_task(task_id=None):
     task_status = {}
-    tasks = _get_tasks()
-    if not tasks:
+    worker_tasks = _get_tasks()
+    if not worker_tasks:
         return {}
-    for worker, tasks in _get_tasks():
+    for worker, tasks in worker_tasks:
         for task in tasks:
             res = AsyncResult(task['id'])
             task_status[task['name']] = {
                 'state': res.state,
                 'meta': res.info
             }
-            res.revoke(terminate=True)
-            task_status[task['name']]['canceled'] = True
+            if not task_id or task_id == task['id']:
+                res.revoke(terminate=True)
+                task_status[task['name']]['canceled'] = True
     return task_status
 
 
@@ -114,9 +115,9 @@ def _get_backup_list():
 
 def overview(request):
     return JsonResponse({
-        'task': _get_running_tasks_status(),
+        'tasks': _get_running_tasks_status(),
         'results': _get_finished_tasks_results(7),
-        'backup': _get_backup_list(),
+        'backups': _get_backup_list(),
     })
 
 
@@ -186,22 +187,15 @@ def upload(request):
 
 
 def create_maitai_request(request):
-    if not settings.CASELINK_MAITAI['ENABLE']:
-        reason = (
-            settings.CASELINK_MAITAI['REASON'] or 'Maitai disabled, please contact the admin.')
-        return JsonResponse({'message': reason}, status=400)
-
     maitai_request = MaitaiAutomationRequest(request.POST)
     if not maitai_request.is_valid():
         return JsonResponse({'message': "Invalid parameters"}, status=400)
 
     workitem_ids = maitai_request.cleaned_data['manual_cases'].split()
-    assignee = maitai_request.cleaned_data['assignee'].split()
+    #TODO: multiple assignee
+    assignee = maitai_request.cleaned_data['assignee'].split().pop()
     labels = maitai_request.cleaned_data['labels']
-
-    maitai_pass = settings.CASELINK_MAITAI['PASSWORD']
-    maitai_user = settings.CASELINK_MAITAI['USER']
-    maitai_url = settings.CASELINK_MAITAI['URL']
+    parent_issue = maitai_request.cleaned_data['parent_issue']
 
     ret = {}
 
@@ -209,40 +203,20 @@ def create_maitai_request(request):
         try:
             wi = WorkItem.objects.get(pk=workitem_id)
         except ObjectDoesNotExist:
-            ret[workitem_id] = {"message": "Workitem doesn't exists."}
+            ret.setdefault(workitem_id, {})['message'] = "Workitem doesn't exists."
             continue
 
-        #TODO: remove verify=False
-        res = requests.post(maitai_url, params={
-            "map_polarionId": workitem_id,
-            #TODO: config file
-            "map_polarionUrl": "https://polarion.engineering.redhat.com/polarion/#/project/RedHatEnterpriseLinux7/workitem?id=" + str(workitem_id),
-            "map_polarionTitle": wi.title,
-            "map_issueAssignee": assignee[0],
-            "map_issueLabels": labels
-        },
-            auth=(maitai_user, maitai_pass), verify=False)
-
-        if res.status_code != 200:
-            ret[workitem_id] = {'message': 'Maitai server internal error.'}
-            continue
-
-        root = ET.fromstring(res.content)
-
-        process = root.find('process-id').text
-        state = root.find('state').text
-        id = root.find('id').text
-        parentProcessInstanceId = root.find('parentProcessInstanceId').text
-        status = root.find('status').text
-
-        if status != 'SUCCESS':
-            ret[workitem_id] = {'message': 'Maitai server returns error.'}
-            continue
-
-        wi.maitai_id = id
-        wi.need_automation = True
+        workflow = CaseAddWorkflow(workitem_id, wi.title,
+                                   assignee=assignee, label=labels, parent_issue=parent_issue)
+        try:
+            res = workflow.start()
+        except (WorkflowException, WorkflowDisabledException) as error:
+            ret.setdefault(workitem_id, {})['message'] = error.message
+        else:
+            wi.maitai_id = res['id']
+            wi.need_automation = True
         wi.save()
 
-        ret[workitem_id] = {"maitai_id": id}
+        ret.setdefault(workitem_id, {})['maitai_id'] = wi.maitai_id
 
     return JsonResponse(ret, status=200)

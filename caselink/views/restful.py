@@ -1,4 +1,5 @@
 import logging
+
 import django_filters
 from rest_framework import filters
 
@@ -12,6 +13,10 @@ from rest_framework import status
 
 from caselink.models import *
 from caselink.serializers import *
+from caselink.utils.jira import add_jira_comment
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 # Standard RESTful APIs
@@ -32,7 +37,16 @@ class WorkItemDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         instance = serializer.save()
+        if instance.changes and instance.jira_id:
+            try:
+                if add_jira_comment(instance.jira_id, instance.changes):
+                    instance.changes = None
+                    instance.save()
+            except Exception as error:
+                LOGGER.error("Failed to add comment for WI %s, Jira task %s",
+                             instance.id, instance.jira_id)
         instance.error_check(depth=1)
+
 
     def perform_destroy(self, instance):
         related = instance.get_related()
@@ -70,18 +84,28 @@ class AutoCaseDetail(generics.RetrieveUpdateDestroyAPIView):
             item.error_check(depth=0)
 
 class LinkageList(generics.ListCreateAPIView):
-    queryset = CaseLink.objects.all()
+    queryset = Linkage.objects.all()
     serializer_class = LinkageSerializer
     filter_backends = (filters.DjangoFilterBackend,)
 
     def perform_create(self, serializer):
+        # TODO: avoid creating when duplicated
         instance = serializer.save()
         instance.autolink()
+
+        autocases = set(instance.autocases.all())
+        for other in instance.workitem.caselinks.all():
+            other_autocases = set(other.autocases.all())
+            if autocases > other_autocases:
+                other.delete()
+            if autocases < other_autocases:
+                instance.delete()
+                return
         instance.error_check(depth=1)
 
 
 class LinkageDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = CaseLink.objects.all()
+    queryset = Linkage.objects.all()
     serializer_class = LinkageSerializer
 
     def perform_update(self, serializer):
@@ -148,8 +172,8 @@ class WorkItemLinkageList(APIView):
     def get_objects(self, workitem):
         wi = get_object_or_404(WorkItem, id=workitem)
         try:
-            return CaseLink.objects.filter(workitem=wi)
-        except CaseLink.DoesNotExist:
+            return Linkage.objects.filter(workitem=wi)
+        except Linkage.DoesNotExist:
             raise Http404
 
     def get(self, request, workitem, format=None):
@@ -178,8 +202,8 @@ class WorkItemLinkageDetail(APIView):
     def get_object(self, workitem, pattern):
         wi = get_object_or_404(WorkItem, id=workitem)
         try:
-            return CaseLink.objects.get(workitem=wi, autocase_pattern=pattern)
-        except CaseLink.DoesNotExist:
+            return Linkage.objects.get(workitem=wi, autocase_pattern=pattern)
+        except Linkage.DoesNotExist:
             raise Http404
 
     def get(self, request, workitem, pattern, format=None):
@@ -207,7 +231,7 @@ class WorkItemLinkageDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class AutoCaseLinkageList(APIView):
+class AutoLinkageageList(APIView):
     """
     Retrieve, update or delete a caselink instance of a autocase.
     """
@@ -219,7 +243,7 @@ class AutoCaseLinkageList(APIView):
         case = get_object_or_404(AutoCase, id=autocase)
         try:
             return case.caselinks.all();
-        except CaseLink.DoesNotExist:
+        except Linkage.DoesNotExist:
             raise Http404
 
     def get(self, request, autocase, format=None):

@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^m2a$', views.m2a, name='m2a'),
     url(r'^a2m$', views.a2m, name='a2m'),
     url(r'^data$', views.data, name='data'),
+    url(r'^pattern-matcher/(?P<pattern>[a-zA-Z0-9\-\._]+)$', views.pattern_matcher, name='pattern-matcher'),
 
     #RESTful APIs
     url(r'^manual/$', restful.WorkItemList.as_view(), name='workitem'),

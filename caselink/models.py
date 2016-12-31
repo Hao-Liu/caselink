@@ -83,15 +83,22 @@ class WorkItem(models.Model):
     documents = models.ManyToManyField(Document, blank=True, related_name='workitems')
     errors = models.ManyToManyField(Error, blank=True, related_name='workitems')
 
+    comment = models.CharField(max_length=65565, blank=True, null=True)
     need_automation = models.BooleanField(default=False)
     maitai_id = models.CharField(max_length=65535, blank=True)
+    jira_id = models.CharField(max_length=65535, blank=True, null=True)
     updated = models.DateTimeField(blank=False, auto_now_add=True)
+
+    changes = models.TextField(blank=True, null=True)
+    confirmed = models.DateTimeField(blank=True, null=True)
 
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)
 
+    _user_data = ('comment', 'need_automation', 'maitai_id', 'jira_id', )
+
     _min_dump = ('id', 'type', 'title', 'automation', 'commit', 'project', 'archs',
-                 'documents', 'maitai_id', 'updated', 'errors') #TODO: some errors can be ignored
+                 'documents', 'maitai_id', 'jira_id', 'updated', 'errors', 'comment', 'changes', 'confirmed') #TODO: some errors can be ignored
 
     def __str__(self):
         return self.id
@@ -134,21 +141,23 @@ class WorkItem(models.Model):
                     continue
                 self.error_related.add(case)
 
-        links = CaseLink.objects.filter(workitem=self)
+        links = Linkage.objects.filter(workitem=self)
 
         if len(links) > 1:
             self.errors.add("WORKITEM_MULTI_PATTERN")
 
         if len(links) == 0:
             if self.automation not in ['notautomated', 'manualonly']:
-                self.errors.add("WORKITEM_AUTOMATION_INCONSISTENCY")
+                self.errors.add("WORKITEM_AUTOMATED_NO_LINKAGE")
         else:
             if self.automation != 'automated':
-                self.errors.add("WORKITEM_AUTOMATION_INCONSISTENCY")
+                self.errors.add("WORKITEM_NOTAUTOMATED_WITH_LINKAGE")
 
-            for link in links:
-                if link.title != self.title:
-                    self.errors.add("WORKITEM_TITLE_INCONSISTENCY")
+        if self.comment:
+            self.errors.add("WORKITEM_HAS_COMMENT")
+
+        if self.changes:
+            self.errors.add("WORKITEM_CHANGED")
 
         if deleted:
             self.errors.add("WORKITEM_DELETED")
@@ -185,7 +194,7 @@ class AutoCase(models.Model):
         return self.id
 
     def autolink(self):
-        for link in CaseLink.objects.all():
+        for link in Linkage.objects.all():
             if link.test_match(self):
                 link.autocases.add(self)
                 link.save()
@@ -203,7 +212,7 @@ class AutoCase(models.Model):
         self.errors.clear()
 
         if len(self.caselinks.all()) < 1:
-            self.errors.add("NO_WORKITEM")
+            self.errors.add("NO_LINKAGE")
 
         if len(self.caselinks.all()) > 1:
             self.errors.add("MULTIPLE_WORKITEM")
@@ -220,7 +229,7 @@ class AutoCase(models.Model):
         self.save()
 
 
-class CaseLink(models.Model):
+class Linkage(models.Model):
     workitem = models.ForeignKey(WorkItem, on_delete=models.PROTECT, null=True, related_name='caselinks')
     autocases = models.ManyToManyField(AutoCase, blank=True, related_name='caselinks')
     autocase_pattern = models.CharField(max_length=65535)
@@ -231,10 +240,7 @@ class CaseLink(models.Model):
     #Field used to perform runtime error checking
     error_related = models.ManyToManyField('self', blank=True)
 
-    # Legacy
-    title = models.CharField(max_length=255, blank=True)
-
-    _min_dump = ('workitem', 'autocase_pattern', 'framework', 'title', )
+    _min_dump = ('workitem', 'autocase_pattern', 'framework', )
 
     def __str__(self):
         return str(self.workitem) + " - " + str(self.autocase_pattern)
@@ -270,7 +276,7 @@ class CaseLink(models.Model):
         self.error_related.clear()
         self.errors.clear()
 
-        links_duplicate = CaseLink.objects.filter(autocase_pattern=self.autocase_pattern)
+        links_duplicate = Linkage.objects.filter(autocase_pattern=self.autocase_pattern)
 
         if len(self.autocases.all()) < 1:
             self.errors.add("PATTERN_INVALID")

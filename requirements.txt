@@ -1,8 +1,11 @@
+jira
 PyYAML
 requests
+celery<4.0
 django
 django-celery
 django-filter
 djangorestframework
 django-crispy-forms
 django-bootstrap-form
+suds-jurko
